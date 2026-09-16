@@ -10,7 +10,7 @@
             padding: 0;
             width: 100vw;
             height: 100vh;
-            background: #000000; /* Fondo negro sólido temporal para forzar que el video se dibuje a color */
+            background: #00FF00; /* Fondo verde brillante exacto (Chroma Key web) */
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -27,12 +27,12 @@
 <body>
     <video id="videoLlorona" autoplay loop playsinline webkit-playsinline>
         <source src="135.mp4" type="video/mp4">
-        Tu navegador no suporta el elemento de video.
+        Tu navegador no soporta el elemento de video.
     </video>
 
     <script>
         const video = document.getElementById('videoLlorona');
-        video.muted = false; // Activamos el audio que ya sabemos que funciona
+        video.muted = false;
         video.play().catch(e => console.log(e));
         
         document.addEventListener('click', () => {
