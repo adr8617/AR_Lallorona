@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overlay La Llorona</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            overflow: hidden;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <video autoplay muted loop playsinline>
+        <source src="https://github.com/adr8617/AR_Lallorona.git/gemini_generated_video_b2caad57.mp4" type="video/mp4">
+        Tu navegador no soporta el elemento de video.
+    </video>
+</body>
+</html>
