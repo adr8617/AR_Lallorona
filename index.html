@@ -8,37 +8,23 @@
         body, html {
             margin: 0;
             padding: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #00FF00; /* Fondo verde brillante exacto (Chroma Key web) */
+            width: 100%;
+            height: 100%;
+            background: transparent;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
         video {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            display: block;
+            background: transparent;
         }
     </style>
 </head>
 <body>
-    <video id="videoLlorona" autoplay loop playsinline webkit-playsinline>
-        <source src="135.mp4" type="video/mp4">
+    <video autoplay muted loop playsinline>
+        <source src="https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/llorona.mp4" type="video/mp4">
         Tu navegador no soporta el elemento de video.
     </video>
-
-    <script>
-        const video = document.getElementById('videoLlorona');
-        video.muted = false;
-        video.play().catch(e => console.log(e));
-        
-        document.addEventListener('click', () => {
-            video.muted = false;
-            video.play();
-        });
-    </script>
 </body>
 </html>
