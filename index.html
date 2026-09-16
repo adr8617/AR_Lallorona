@@ -8,26 +8,27 @@
         body, html {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
-            background: white; /* Fondo blanco sólido para comprobar visualización */
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        /* Usamos un contenedor de video estilizado y visible a fuerzas */
-        video {
             width: 100vw;
             height: 100vh;
+            background: transparent;
+            overflow: hidden;
+        }
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
-            display: block;
-            background: black; /* Fondo negro temporal en el video para ver dónde está ubicado */
+            background: transparent;
+            /* Fuerza a la tarjeta gráfica del celular a renderizar la imagen del video */
+            transform: translateZ(0);
+            will-change: transform;
         }
     </style>
 </head>
 <body>
-    <video id="videoLlorona" autoplay loop playsinline webkit-playsinline controls>
+    <video id="videoLlorona" autoplay loop playsinline webkit-playsinline>
         <source src="135.mp4" type="video/mp4">
         Tu navegador no soporta el elemento de video.
     </video>
@@ -35,8 +36,17 @@
     <script>
         const video = document.getElementById('videoLlorona');
         video.muted = false;
-        video.play();
+        
+        // Forzar reproducción inmediata
+        video.play().catch(e => {
+            console.log("Esperando interacción para reproducir");
+        });
+
+        // Asegurar que si se toca la pantalla arranque con imagen y sonido
+        document.addEventListener('click', () => {
+            video.muted = false;
+            video.play();
+        });
     </script>
 </body>
 </html>
- 
