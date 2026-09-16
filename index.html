@@ -8,18 +8,18 @@
         body, html {
             margin: 0;
             padding: 0;
-            width: 100vw;
-            height: 100vh;
-            background: transparent;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        video {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            background: transparent;
+            overflow: hidden;
+        }
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: fill; /* Fuerza a que el video cubra todo el espacio transparente */
             background: transparent;
         }
     </style>
@@ -32,13 +32,11 @@
 
     <script>
         const video = document.getElementById('videoLlorona');
-        
-        // Forzar reproducción al cargar
         video.play().catch(e => console.log(e));
-
-        // Si CameraFi bloquea el inicio, se reproduce en cuanto toques cualquier parte del recuadro
+        
+        // Si al tocar la pantalla arranca, aseguramos la reproducción
         document.addEventListener('click', () => {
-            video.muted = false; // Activa el sonido al primer toque
+            video.muted = false;
             video.play();
         });
     </script>
