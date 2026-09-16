@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prueba Audio Llorona</title>
+    <title>Overlay La Llorona</title>
     <style>
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 255, 0, 0.2); /* Fondo verde semitransparente temporal para ver que cargó la página */
+            background: #ffffff; /* Fondo blanco sólido provisional para forzar la pintura del video */
             overflow: hidden;
         }
         video {
@@ -31,17 +31,9 @@
 
     <script>
         const video = document.getElementById('videoLlorona');
-        video.muted = false; // Forzamos el audio abierto
+        video.muted = false; 
+        video.play().catch(error => console.log(error));
         
-        // Intentamos reproducir con sonido
-        let playPromise = video.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                console.log("Bloqueo de autoplay con audio detectado, esperando toque...");
-            });
-        }
-
-        // Al primer toque en la pantalla de CameraFi, arranca el audio y el video a fuerza
         document.addEventListener('click', () => {
             video.muted = false;
             video.play();
