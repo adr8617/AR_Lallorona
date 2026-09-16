@@ -22,9 +22,22 @@
     </style>
 </head>
 <body>
-    <video autoplay muted loop playsinline>
-    <source src="25297.mp4" type="video/mp4">
-    Tu navegador no soporta el elemento de video.
-</video>
+    <video id="videoLlorona" autoplay muted loop playsinline webkit-playsinline>
+        <source src="25297.mp4" type="video/mp4">
+        Tu navegador no soporta el elemento de video.
+    </video>
+
+    <script>
+        // Fuerza la reproducción automática de inmediato para CameraFi
+        const video = document.getElementById('videoLlorona');
+        video.play().catch(error => {
+            console.log("Reproducción automática iniciada con interacción");
+        });
+        
+        // Intenta reproducir de nuevo si hay un toque en cualquier parte
+        document.body.addEventListener('click', () => {
+            video.play();
+        }, { once: true });
+    </script>
 </body>
 </html>
