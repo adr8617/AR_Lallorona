@@ -8,16 +8,20 @@
         body, html {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             background: transparent;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         video {
             width: 100%;
             height: 100%;
             object-fit: contain;
             background: transparent;
+            display: block;
         }
     </style>
 </head>
@@ -28,16 +32,16 @@
     </video>
 
     <script>
-        // Fuerza la reproducción automática de inmediato para CameraFi
         const video = document.getElementById('videoLlorona');
-        video.play().catch(error => {
-            console.log("Reproducción automática iniciada con interacción");
-        });
+        // Fuerza el inicio automático
+        video.play().catch(() => {});
         
-        // Intenta reproducir de nuevo si hay un toque en cualquier parte
-        document.body.addEventListener('click', () => {
-            video.play();
-        }, { once: true });
+        // Asegura que si CameraFi pausa el renderizado, lo reactive
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) {
+                video.play();
+            }
+        });
     </script>
 </body>
 </html>
