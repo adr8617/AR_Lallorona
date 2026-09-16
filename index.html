@@ -10,7 +10,7 @@
             padding: 0;
             width: 100vw;
             height: 100vh;
-            background: transparent;
+            background: #000000; /* Fondo temporal negro para evitar pantallas grises en apps */
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -20,7 +20,6 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            background: transparent;
             display: block;
         }
     </style>
@@ -33,15 +32,7 @@
 
     <script>
         const video = document.getElementById('videoLlorona');
-        // Fuerza el inicio automático
         video.play().catch(() => {});
-        
-        // Asegura que si CameraFi pausa el renderizado, lo reactive
-        document.addEventListener("visibilitychange", () => {
-            if (!document.hidden) {
-                video.play();
-            }
-        });
     </script>
 </body>
 </html>
