@@ -10,39 +10,31 @@
             padding: 0;
             width: 100vw;
             height: 100vh;
-            background: transparent;
+            background: #000000; /* Fondo negro sólido temporal para forzar que el video se dibuje a color */
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         video {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             object-fit: contain;
-            background: transparent;
-            /* Fuerza a la tarjeta gráfica del celular a renderizar la imagen del video */
-            transform: translateZ(0);
-            will-change: transform;
+            display: block;
         }
     </style>
 </head>
 <body>
     <video id="videoLlorona" autoplay loop playsinline webkit-playsinline>
         <source src="135.mp4" type="video/mp4">
-        Tu navegador no soporta el elemento de video.
+        Tu navegador no suporta el elemento de video.
     </video>
 
     <script>
         const video = document.getElementById('videoLlorona');
-        video.muted = false;
+        video.muted = false; // Activamos el audio que ya sabemos que funciona
+        video.play().catch(e => console.log(e));
         
-        // Forzar reproducción inmediata
-        video.play().catch(e => {
-            console.log("Esperando interacción para reproducir");
-        });
-
-        // Asegurar que si se toca la pantalla arranque con imagen y sonido
         document.addEventListener('click', () => {
             video.muted = false;
             video.play();
