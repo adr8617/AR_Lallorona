@@ -17,22 +17,14 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
-            /* Esto vuelve transparente todo lo que sea blanco en el video */
-            mix-blend-mode: multiply; 
-            filter: contrast(120%);
-            background: transparent;
+            background: transparent !important;
         }
     </style>
 </head>
 <body>
-    <video id="videoLlorona" autoplay muted loop playsinline webkit-playsinline>
-        <source src="135.mp4" type="video/mp4">
+    <video autoplay muted loop playsinline>
+        <source src="llorona.mp4" type="video/mp4">
         Tu navegador no soporta el elemento de video.
     </video>
-
-    <script>
-        const video = document.getElementById('videoLlorona');
-        video.play().catch(() => {});
-    </script>
 </body>
 </html>
