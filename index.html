@@ -22,9 +22,27 @@
     </style>
 </head>
 <body>
-    <video autoplay muted loop playsinline>
+    <video autoplay muted loop playsinline id="videoLlorona">
         <source src="llorona.mp4" type="video/mp4">
         Tu navegador no soporta el elemento de video.
     </video>
+
+    <script>
+        const vid = document.getElementById("videoLlorona");
+
+        // Forzar reproducción y reinicio al cargar la página en la app
+        window.addEventListener('load', function() {
+            vid.currentTime = 0;
+            vid.play().catch(function(error) {
+                console.log("Autoplay bloqueado o reintentando:", error);
+            });
+        });
+
+        // Garantizar bucle infinito continuo
+        vid.addEventListener("ended", function() {
+            vid.currentTime = 0;
+            vid.play();
+        });
+    </script>
 </body>
 </html>
