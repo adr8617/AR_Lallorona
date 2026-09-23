@@ -3,13 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Estudio AR: Efectos Dinámicos</title>
+<title>Estudio AR: Versión Comercial Blindada</title>
 <style>
 body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
 #contenedor-principal { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #000; }
-#pantalla-inicio { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-#btn-iniciar { background-color: #28a745; color: white; font-weight: bold; font-size: 20px; padding: 15px 30px; border-radius: 12px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; }
-#mensaje-error { color: #ff4444; margin-top: 20px; text-align: center; max-width: 80%; font-size: 14px; }
+#pantalla-inicio { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.97); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; gap: 15px; }
+#btn-iniciar { background-color: #28a745; color: white; font-weight: bold; font-size: 18px; padding: 12px 25px; border-radius: 12px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; }
+.input-login { padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; width: 260px; text-align: center; }
+#mensaje-error { color: #ff4444; text-align: center; max-width: 80%; font-size: 14px; }
+
+/* Modal de Autenticación de Doble Factor (2FA / Alerta de Dispositivo Nuevo) */
+#modal-2fa { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 20000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+#contenido-2fa { background: #1c1c1c; color: #fff; padding: 25px; border-radius: 12px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.7); border: 1px solid #ff4444; }
+#contenido-2fa h3 { color: #ff4444; margin-top: 0; }
+.btn-2fa { padding: 10px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; margin: 10px 5px; }
+#btn-aprobar-dispositivo { background: #28a745; color: white; }
+#btn-rechazar-dispositivo { background: #dc3545; color: white; }
 
 #panel-controles { position: absolute; top: 20px; left: 20px; z-index: 5000; display: flex; gap: 10px; align-items: center; }
 .btn-flotante { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(0, 0, 0, 0.4); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: background-color 0.2s; }
@@ -18,9 +27,9 @@ body { margin: 0; background-color: #000; display: flex; justify-content: center
 #btn-menu-circular::after { content: "⚙️"; font-size: 16px; }
 #btn-mover-efecto::after { content: "✋"; font-size: 16px; }
 #btn-mover-efecto.activo { background-color: #28a745; border-color: #fff; }
+#btn-terminos::after { content: "📄"; font-size: 16px; }
 
-/* Botón de Grabación (Círculo rojo dinámico) */
-#btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: background-color 0.2s; }
+#btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; }
 #btn-grabar::after { content: "🔴"; font-size: 14px; }
 #btn-grabar.grabando { background-color: rgba(255, 0, 0, 0.9); animation: parpadeo 1s infinite; }
 @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
@@ -34,32 +43,60 @@ body { margin: 0; background-color: #000; display: flex; justify-content: center
 
 .btn-accion-menu { color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; text-align: center; }
 #btn-agregar-archivo { background: #1b4d3e; }
-#btn-agregar-archivo:hover { background: #28a745; }
 #btn-borrar-item { background: #6c2222; }
-#btn-borrar-item:hover { background: #a72828; }
 
 #panel-escala { display: none; position: absolute; top: 70px; left: 20px; background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 8px; z-index: 5000; color: white; font-size: 12px; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
 #slider-escala { width: 100px; cursor: pointer; }
 
-#btn-color { position: absolute; top: 20px; right: 20px; width: 25px; height: 25px; border-radius: 50%; background-color: #00ff00; cursor: pointer; z-index: 5000; opacity: 0.4; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.8); transition: opacity 0.2s; display: block; }
+#aviso-premium { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(220, 53, 69, 0.95); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 9999; display: none; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.6); line-height: 1.4; }
+
+#modal-terminos { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+#contenido-modal { background: #1c1c1c; color: #fff; padding: 25px; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 5px 20px rgba(0,0,0,0.7); font-size: 13px; line-height: 1.5; border: 1px solid #444; }
+#contenido-modal h3 { margin-top: 0; color: #28a745; font-size: 18px; }
+#btn-cerrar-modal { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-top: 15px; cursor: pointer; float: right; font-weight: bold; }
+
+#btn-color { position: absolute; top: 20px; right: 20px; width: 25px; height: 25px; border-radius: 50%; background-color: #00ff00; cursor: pointer; z-index: 5000; opacity: 0.4; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.8); display: block; }
 #menu-colores { display: none; position: absolute; top: 55px; right: 20px; background: rgba(0,0,0,0.9); padding: 10px; border-radius: 8px; z-index: 5001; flex-direction: column; gap: 12px; }
 .opcion-color { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
 
 #video-camara { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; background-color: #000; }
 #video-multimedia, #imagen-fuente-oculta { display: none; }
-
 #capa-efecto-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; display: flex; justify-content: center; align-items: center; }
-#canvas-overlay { width: 80%; max-width: 600px; height: auto; object-fit: contain; pointer-events: auto; touch-action: none; cursor: grab; }
-#canvas-overlay:active { cursor: grabbing; }
+#canvas-overlay { width: 110%; max-width: none; height: auto; object-fit: cover; pointer-events: auto; touch-action: none; cursor: default; }
 </style>
 </head>
 <body>
 <div id="pantalla-inicio">
+    <h2 style="color: white; margin-bottom: 5px;">Estudio AR</h2>
+    <p style="color: #aaa; font-size: 13px; margin-top: 0;">Acceso de Superusuario y Control Maestro</p>
+    <input type="email" id="input-email-usuario" class="input-login" placeholder="correo@gmail.com" value="adr8617@gmail.com">
     <button id="btn-iniciar">TOCA AQUÍ PARA INICIAR</button>
     <p id="mensaje-error"></p>
 </div>
 
+<!-- Modal de Alerta 2FA por Dispositivo Desconocido -->
+<div id="modal-2fa">
+    <div id="contenido-2fa">
+        <h3>🚨 Alerta de Seguridad</h3>
+        <p>Se ha intentado activar el modo Superusuario desde un <strong>dispositivo o IP no registrado</strong>.<br><br>¿Autorizas el acceso para este nuevo teléfono?</p>
+        <button id="btn-aprobar-dispositivo" class="btn-2fa">Sí, soy yo (Autorizar)</button>
+        <button id="btn-rechazar-dispositivo" class="btn-2fa">Bloquear</button>
+    </div>
+</div>
+
+<div id="modal-terminos">
+    <div id="contenido-modal">
+        <h3>📄 Términos, Condiciones y Privacidad</h3>
+        <p><strong>Privacidad de Datos:</strong> Estudio AR utiliza la cámara de tu dispositivo exclusivamente en tiempo real para superponer los efectos visuales seleccionados. 
+        <br><br><strong>Seguridad:</strong> Ninguna imagen, video ni flujo de cámara es grabado ni transmitido a servidores externos. Todo el procesamiento ocurre localmente.
+        <br><br><strong>Suscripción:</strong> Funciones avanzadas por $30 MXN bimestrales gestionados mediante Google Play Billing.</p>
+        <button id="btn-cerrar-modal">Entendido</button>
+    </div>
+</div>
+
 <div id="contenedor-principal">
+    <div id="aviso-premium">⚠️ Función bloqueada. Desbloquea movimiento, zoom y croma completo suscribiéndote por solo $30 bimestrales.</div>
+
     <div id="panel-controles">
         <div id="btn-menu-circular" class="btn-flotante">
             <span id="tooltip-texto">Menú de Efectos</span>
@@ -69,8 +106,8 @@ body { margin: 0; background-color: #000; display: flex; justify-content: center
                 <button id="btn-borrar-item" class="btn-accion-menu">🗑️ Borrar seleccionado</button>
             </div>
         </div>
-        <div id="btn-mover-efecto" class="btn-flotante" title="Mover y Escalar Efecto"></div>
-        <!-- Botón de Grabación -->
+        <div id="btn-mover-efecto" class="btn-flotante" title="Mover y Escalar"></div>
+        <div id="btn-terminos" class="btn-flotante" title="Términos y Privacidad"></div>
         <div id="btn-grabar" title="Grabar Video"></div>
     </div>
 
@@ -83,9 +120,9 @@ body { margin: 0; background-color: #000; display: flex; justify-content: center
 
     <div id="btn-color"></div>
     <div id="menu-colores">
-        <div class="opcion-color" data-color="verde" style="background-color: #00ff00;"></div>
-        <div class="opcion-color" data-color="azul" style="background-color: #0000ff;"></div>
-        <div class="opcion-color" data-color="negro" style="background-color: #111; border: 1px solid #777;"></div>
+        <div class="opcion-color" data-color="verde" style="background-color: #00ff00;" title="Verde"></div>
+        <div class="opcion-color" data-color="azul" style="background-color: #0000ff;" title="Azul (Premium)"></div>
+        <div class="opcion-color" data-color="negro" style="background-color: #111; border: 1px solid #777;" title="Negro (Premium)"></div>
     </div>
 
     <video id="video-camara" autoplay playsinline muted></video>
@@ -98,6 +135,19 @@ body { margin: 0; background-color: #000; display: flex; justify-content: center
 </div>
 
 <script>
+const SUPER_USUARIOS = ["adr8617@gmail.com", "la.burbuj@gmail.com"];
+let esSuperUsuario = false;
+
+// Generador de ID Único de Dispositivo en LocalStorage
+function obtenerDispositivoId() {
+    let devId = localStorage.getItem('estudio_ar_device_id');
+    if (!devId) {
+        devId = 'dev_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+        localStorage.setItem('estudio_ar_device_id', devId);
+    }
+    return devId;
+}
+
 const MULTIMEDIA_DEFAULT = [{ nombre: "Video Chroma: La Llorona", archivo: "llorona.mp4", tipo: "video" }];
 
 function obtenerBaseDatos() {
@@ -119,10 +169,15 @@ const canvas = document.getElementById('canvas-overlay');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
 const btnIniciar = document.getElementById('btn-iniciar');
+const inputEmailUsuario = document.getElementById('input-email-usuario');
 const pantallaInicio = document.getElementById('pantalla-inicio');
 const panelControles = document.getElementById('panel-controles');
 const selectorVideo = document.getElementById('selector-video');
 const mensajeError = document.getElementById('mensaje-error');
+const avisoPremium = document.getElementById('aviso-premium');
+const modal2fa = document.getElementById('modal-2fa');
+const btnAprobarDispositivo = document.getElementById('btn-aprobar-dispositivo');
+const btnRechazarDispositivo = document.getElementById('btn-rechazar-dispositivo');
 
 const btnMenuCircular = document.getElementById('btn-menu-circular');
 const selectorVideoWrapper = document.getElementById('selector-video-wrapper');
@@ -130,6 +185,9 @@ const btnAgregarArchivo = document.getElementById('btn-agregar-archivo');
 const btnBorrarItem = document.getElementById('btn-borrar-item');
 const inputArchivoOculto = document.getElementById('input-archivo-oculto');
 const btnMoverEfecto = document.getElementById('btn-mover-efecto');
+const btnTerminos = document.getElementById('btn-terminos');
+const modalTerminos = document.getElementById('modal-terminos');
+const btnCerrarModal = document.getElementById('btn-cerrar-modal');
 const btnGrabar = document.getElementById('btn-grabar');
 const panelEscala = document.getElementById('panel-escala');
 const sliderEscala = document.getElementById('slider-escala');
@@ -138,7 +196,7 @@ const btnColor = document.getElementById('btn-color');
 const menuColores = document.getElementById('menu-colores');
 const opcionesColor = document.querySelectorAll('.opcion-color');
 
-let colorFiltro = 'verde';
+let colorFiltro = 'verde'; 
 let procesando = false;
 let tipoActual = 'video';
 let animacionGifId = null;
@@ -148,10 +206,17 @@ let posX = 0, posY = 0, escalaActual = 1;
 let arrastrando = false;
 let startX = 0, startY = 0;
 
-// Variables para la grabación de video
 let mediaRecorder;
 let fragmentosVideo = [];
 let estaGrabando = false;
+
+function mostrarAviso() {
+    avisoPremium.style.display = 'block';
+    setTimeout(() => { avisoPremium.style.display = 'none'; }, 5000);
+}
+
+btnTerminos.addEventListener('click', (e) => { e.stopPropagation(); modalTerminos.style.display = 'flex'; });
+btnCerrarModal.addEventListener('click', () => { modalTerminos.style.display = 'none'; });
 
 function actualizarSelect() {
     selectorVideo.innerHTML = "";
@@ -179,12 +244,21 @@ document.addEventListener('click', () => {
 });
 
 selectorVideoWrapper.addEventListener('click', (e) => e.stopPropagation());
-btnAgregarArchivo.addEventListener('click', (e) => { e.stopPropagation(); inputArchivoOculto.click(); });
+
+btnAgregarArchivo.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!esSuperUsuario && listaMultimedia.length >= 2) {
+        mostrarAviso();
+        selectorVideoWrapper.style.display = 'none';
+        return;
+    }
+    inputArchivoOculto.click();
+});
 
 btnBorrarItem.addEventListener('click', (e) => {
     e.stopPropagation();
     const indexSeleccionado = selectorVideo.selectedIndex;
-    if (listaMultimedia.length <= 1) { alert("No puedes borrar el último elemento predeterminado."); return; }
+    if (listaMultimedia.length <= 1) { alert("No puedes borrar el elemento predeterminado."); return; }
     if (indexSeleccionado >= 0) {
         if (confirm(`¿Deseas eliminar este efecto?`)) {
             listaMultimedia.splice(indexSeleccionado, 1);
@@ -217,12 +291,17 @@ inputArchivoOculto.addEventListener('change', (e) => {
 
 btnMoverEfecto.addEventListener('click', (e) => {
     e.stopPropagation();
+    if (!esSuperUsuario) {
+        mostrarAviso();
+        return;
+    }
     modoMoverActivo = !modoMoverActivo;
     btnMoverEfecto.classList.toggle('activo', modoMoverActivo);
     panelEscala.style.display = modoMoverActivo ? 'flex' : 'none';
 });
 
 sliderEscala.addEventListener('input', (e) => {
+    if (!esSuperUsuario) return;
     escalaActual = parseFloat(e.target.value);
     aplicarTransformacion();
 });
@@ -233,7 +312,7 @@ function aplicarTransformacion() {
 
 ['mousedown', 'touchstart'].forEach(evt => {
     canvas.addEventListener(evt, (e) => {
-        if (!modoMoverActivo) return;
+        if (!modoMoverActivo || !esSuperUsuario) return;
         arrastrando = true;
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -258,45 +337,24 @@ function aplicarTransformacion() {
     window.addEventListener(evt, () => { arrastrando = false; });
 });
 
-// Lógica de Grabación de Pantalla (Cámara + Efecto combinado)
 btnGrabar.addEventListener('click', () => {
-    if (!estaGrabando) {
-        iniciarGrabacion();
-    } else {
-        detenerGrabacion();
-    }
+    if (!estaGrabando) { iniciarGrabacion(); } else { detenerGrabacion(); }
 });
 
 function iniciarGrabacion() {
     fragmentosVideo = [];
-    // Captura el flujo combinado de la pantalla principal (canvas y cámara)
     const streamCanvas = canvas.captureStream(30); 
     const streamCamara = videoCamara.srcObject;
-    
-    // Unimos los tracks de video y audio si están disponibles
     const tracksCombinados = [...streamCamara.getVideoTracks(), ...streamCanvas.getVideoTracks()];
     if (videoMultimedia.srcObject && videoMultimedia.srcObject.getAudioTracks().length > 0) {
         tracksCombinados.push(...videoMultimedia.srcObject.getAudioTracks());
     }
-
     const streamFinal = new MediaStream(tracksCombinados);
 
-    try {
-        mediaRecorder = new MediaRecorder(streamFinal, { mimeType: 'video/webm; codecs=vp9' });
-    } catch (e) {
-        try {
-            mediaRecorder = new MediaRecorder(streamFinal, { mimeType: 'video/mp4' });
-        } catch (err) {
-            mediaRecorder = new MediaRecorder(streamFinal);
-        }
-    }
+    try { mediaRecorder = new MediaRecorder(streamFinal, { mimeType: 'video/webm; codecs=vp9' }); } 
+    catch (e) { mediaRecorder = new MediaRecorder(streamFinal); }
 
-    mediaRecorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-            fragmentosVideo.push(event.data);
-        }
-    };
-
+    mediaRecorder.ondataavailable = (event) => { if (event.data && event.data.size > 0) fragmentosVideo.push(event.data); };
     mediaRecorder.onstop = () => {
         const blob = new Blob(fragmentosVideo, { type: 'video/webm' });
         const urlBlob = URL.createObjectURL(blob);
@@ -306,10 +364,7 @@ function iniciarGrabacion() {
         a.download = `EstudioAR_${Date.now()}.webm`;
         document.body.appendChild(a);
         a.click();
-        setTimeout(() => {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(urlBlob);
-        }, 100);
+        setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(urlBlob); }, 100);
     };
 
     mediaRecorder.start();
@@ -318,11 +373,7 @@ function iniciarGrabacion() {
 }
 
 function detenerGrabacion() {
-    if (mediaRecorder && estaGrabando) {
-        mediaRecorder.stop();
-        estaGrabando = false;
-        btnGrabar.classList.remove('grabando');
-    }
+    if (mediaRecorder && estaGrabando) { mediaRecorder.stop(); estaGrabando = false; btnGrabar.classList.remove('grabando'); }
 }
 
 btnColor.addEventListener('click', (e) => {
@@ -334,7 +385,13 @@ btnColor.addEventListener('click', (e) => {
 
 opcionesColor.forEach(opcion => {
     opcion.addEventListener('click', (e) => {
-        colorFiltro = e.target.getAttribute('data-color');
+        const colorSeleccionado = e.target.getAttribute('data-color');
+        if (!esSuperUsuario && colorSeleccionado !== 'verde') {
+            mostrarAviso();
+            menuColores.style.display = 'none';
+            return;
+        }
+        colorFiltro = colorSeleccionado;
         btnColor.style.backgroundColor = getComputedStyle(e.target).backgroundColor;
         menuColores.style.display = 'none';
         btnColor.style.opacity = '0.4';
@@ -347,19 +404,15 @@ function cargarArchivoSeleccionado() {
     const archivoUrl = selectedOption.value;
     tipoActual = selectedOption.getAttribute('data-tipo');
 
-    posX = 0; posY = 0; escalaActual = 1; sliderEscala.value = 1;
-    if (modoMoverActivo) { btnMoverEfecto.click(); }
     if (animacionGifId) { cancelAnimationFrame(animacionGifId); animacionGifId = null; }
 
     if (tipoActual === 'gif') {
         videoMultimedia.pause();
         btnColor.style.display = 'block';
-        
         imagenFuenteOculta.src = archivoUrl;
         imagenFuenteOculta.onload = () => {
             canvas.width = imagenFuenteOculta.naturalWidth || 500;
             canvas.height = imagenFuenteOculta.naturalHeight || 500;
-            aplicarTransformacion();
             procesarChromaKeyGIF();
         };
     } else {
@@ -373,7 +426,43 @@ function cargarArchivoSeleccionado() {
 
 selectorVideo.addEventListener('change', cargarArchivoSeleccionado);
 
-async function iniciarExperiencia() {
+function verificarAccesoSuperusuario() {
+    const emailIngresado = inputEmailUsuario.value.trim().toLowerCase();
+    
+    if (SUPER_USUARIOS.includes(emailIngresado)) {
+        const deviceIdActual = obtenerDispositivoId();
+        const dispositivosAutorizadosKey = `auth_devs_${emailIngresado}`;
+        let dispositivosGuardados = JSON.parse(localStorage.getItem(dispositivosAutorizadosKey) || "[]");
+
+        // Si este teléfono ya está autorizado previamente
+        if (dispositivosGuardados.includes(deviceIdActual)) {
+            esSuperUsuario = true;
+            lanzarApp();
+        } else {
+            // Es un dispositivo NUEVO con correo de superusuario: Se dispara la Alerta de Seguridad (2FA)
+            modal2fa.style.display = 'flex';
+
+            btnAprobarDispositivo.onclick = () => {
+                dispositivosGuardados.push(deviceIdActual);
+                localStorage.setItem(dispositivosAutorizadosKey, JSON.stringify(dispositivosGuardados));
+                modal2fa.style.display = 'none';
+                esSuperUsuario = true;
+                lanzarApp();
+            };
+
+            btnRechazarDispositivo.onclick = () => {
+                modal2fa.style.display = 'none';
+                esSuperUsuario = false;
+                lanzarApp(); // Arranca como usuario normal de prueba bloqueado
+            };
+        }
+    } else {
+        esSuperUsuario = false;
+        lanzarApp();
+    }
+}
+
+async function lanzarApp() {
     mensajeError.innerText = "Solicitando permisos de cámara...";
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -399,11 +488,7 @@ async function iniciarExperiencia() {
 videoMultimedia.addEventListener('loadedmetadata', () => {
     canvas.width = videoMultimedia.videoWidth;
     canvas.height = videoMultimedia.videoHeight;
-    aplicarTransformacion();
-    if (!procesando) {
-        procesando = true;
-        procesarChromaKeyVideo();
-    }
+    if (!procesando) { procesando = true; procesarChromaKeyVideo(); }
 });
 
 function procesarChromaKeyVideo() {
@@ -413,17 +498,10 @@ function procesarChromaKeyVideo() {
         let totalPixeles = frame.data.length / 4;
 
         for (let i = 0; i < totalPixeles; i++) {
-            let r = frame.data[i * 4 + 0];
-            let g = frame.data[i * 4 + 1];
-            let b = frame.data[i * 4 + 2];
-
-            if (colorFiltro === 'verde') {
-                if (g > 90 && r < 110 && b < 110) frame.data[i * 4 + 3] = 0;
-            } else if (colorFiltro === 'azul') {
-                if (b > 90 && r < 110 && g < 110) frame.data[i * 4 + 3] = 0;
-            } else if (colorFiltro === 'negro') {
-                if (r < 50 && g < 50 && b < 50) frame.data[i * 4 + 3] = 0;
-            }
+            let r = frame.data[i * 4 + 0], g = frame.data[i * 4 + 1], b = frame.data[i * 4 + 2];
+            if (colorFiltro === 'verde') { if (g > 90 && r < 110 && b < 110) frame.data[i * 4 + 3] = 0; } 
+            else if (colorFiltro === 'azul' && esSuperUsuario) { if (b > 90 && r < 110 && g < 110) frame.data[i * 4 + 3] = 0; } 
+            else if (colorFiltro === 'negro' && esSuperUsuario) { if (r < 50 && g < 50 && b < 50) frame.data[i * 4 + 3] = 0; }
         }
         ctx.putImageData(frame, 0, 0);
     }
@@ -437,24 +515,17 @@ function procesarChromaKeyGIF() {
         let totalPixeles = frame.data.length / 4;
 
         for (let i = 0; i < totalPixeles; i++) {
-            let r = frame.data[i * 4 + 0];
-            let g = frame.data[i * 4 + 1];
-            let b = frame.data[i * 4 + 2];
-
-            if (colorFiltro === 'verde') {
-                if (g > 90 && r < 110 && g < 110) frame.data[i * 4 + 3] = 0;
-            } else if (colorFiltro === 'azul') {
-                if (b > 90 && r < 110 && g < 110) frame.data[i * 4 + 3] = 0;
-            } else if (colorFictio === 'negro' || colorFiltro === 'negro') {
-                if (r < 50 && g < 50 && b < 50) frame.data[i * 4 + 3] = 0;
-            }
+            let r = frame.data[i * 4 + 0], g = frame.data[i * 4 + 1], b = frame.data[i * 4 + 2];
+            if (colorFiltro === 'verde') { if (g > 90 && r < 110 && b < 110) frame.data[i * 4 + 3] = 0; } 
+            else if (colorFiltro === 'azul' && esSuperUsuario) { if (b > 90 && r < 110 && g < 110) frame.data[i * 4 + 3] = 0; } 
+            else if (colorFiltro === 'negro' && esSuperUsuario) { if (r < 50 && g < 50 && b < 50) frame.data[i * 4 + 3] = 0; }
         }
         ctx.putImageData(frame, 0, 0);
         animacionGifId = requestAnimationFrame(procesarChromaKeyGIF);
     }
 }
 
-btnIniciar.addEventListener('click', iniciarExperiencia);
+btnIniciar.addEventListener('click', verificarAccesoSuperusuario);
 </script>
 </body>
 </html>
