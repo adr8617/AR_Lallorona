@@ -133,12 +133,12 @@
             left: 48px;
             top: 0;
             background: rgba(0, 0, 0, 0.85);
-            padding: 8px;
+            padding: 10px;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-            display: none;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
+            min-width: 200px;
         }
         #selector-video { 
             padding: 8px; 
@@ -150,13 +150,9 @@
             cursor: pointer; 
         }
         
-        /* Botón oculto real de archivo para disparar el explorador del celular */
-        #input-archivo-oculto {
-            display: none;
-        }
+        #input-archivo-oculto { display: none; }
 
-        #btn-agregar-archivo {
-            background: #1b4d3e;
+        .btn-accion-menu {
             color: white;
             border: none;
             padding: 6px 10px;
@@ -165,9 +161,11 @@
             cursor: pointer;
             text-align: center;
         }
-        #btn-agregar-archivo:hover {
-            background: #28a745;
-        }
+        #btn-agregar-archivo { background: #1b4d3e; }
+        #btn-agregar-archivo:hover { background: #28a745; }
+
+        #btn-borrar-item { background: #6c2222; }
+        #btn-borrar-item:hover { background: #a72828; }
 
         /* ==========================================================================
            4. SELECTOR DE COLOR CHROMA KEY (Derecha superior)
@@ -186,6 +184,7 @@
             border: 2px solid white; 
             box-shadow: 0 0 5px rgba(0,0,0,0.8); 
             transition: opacity 0.2s; 
+            display: block; /* Siempre disponible para videos */
         }
         #menu-colores { 
             display: none; 
@@ -231,7 +230,7 @@
             object-fit: contain; 
             z-index: 2; 
             pointer-events: none; 
-            display: none; 
+            display: block; 
         }
         
         #imagen-gif { 
@@ -263,15 +262,16 @@
                 <span id="tooltip-texto">Menú de Efectos</span>
                 <div id="selector-video-wrapper">
                     <select id="selector-video"></select>
-                    <button id="btn-agregar-archivo">➕ Agregar archivo local</button>
+                    <button id="btn-agregar-archivo" class="btn-accion-menu">➕ Agregar archivo local</button>
+                    <button id="btn-borrar-item" class="btn-accion-menu">🗑️ Borrar seleccionado</button>
                 </div>
             </div>
         </div>
 
-        <!-- Input de archivo invisible que se activa al pulsar "Agregar archivo local" -->
+        <!-- Input de archivo invisible -->
         <input type="file" id="input-archivo-oculto" accept="video/mp4,image/gif">
 
-        <!-- Selector de color Chroma Key -->
+        <!-- Selector de color Chroma Key (Siempre visible para videos) -->
         <div id="btn-color"></div>
         <div id="menu-colores">
             <div class="opcion-color" data-color="verde" style="background-color: #00ff00;"></div>
@@ -288,9 +288,8 @@
 
     <script>
         /* ==========================================================================
-           6. GESTIÓN DE MEMORIA LOCAL (Local Database)
+           6. GESTIÓN DE MEMORIA LOCAL (Local Database con borrado)
            ========================================================================== */
-        // Base predeterminada inicial obligatoria (La Llorona por defecto)
         const MULTIMEDIA_DEFAULT = [
             {
                 nombre: "Video Chroma: La Llorona",
@@ -299,11 +298,13 @@
             }
         ];
 
-        // Cargar desde la memoria del teléfono o inicializar con el valor por defecto
         function obtenerBaseDatos() {
             const guardado = localStorage.getItem('efectos_ar_db');
             if (guardado) {
-                try { return JSON.parse(guardado); } catch(e) { return MULTIMEDIA_DEFAULT; }
+                try { 
+                    const parsed = JSON.parse(guardado);
+                    return parsed.length > 0 ? parsed : MULTIMEDIA_DEFAULT;
+                } catch(e) { return MULTIMEDIA_DEFAULT; }
             }
             return MULTIMEDIA_DEFAULT;
         }
@@ -332,6 +333,7 @@
         const btnMenuCircular = document.getElementById('btn-menu-circular');
         const selectorVideoWrapper = document.getElementById('selector-video-wrapper');
         const btnAgregarArchivo = document.getElementById('btn-agregar-archivo');
+        const btnBorrarItem = document.getElementById('btn-borrar-item');
         const inputArchivoOculto = document.getElementById('input-archivo-oculto');
         
         const btnColor = document.getElementById('btn-color');
@@ -342,7 +344,6 @@
         let procesando = false;
         let tipoActual = 'video';
 
-        // Rellenar menú desplegable dinámicamente con la memoria local
         function actualizarSelect() {
             selectorVideo.innerHTML = "";
             listaMultimedia.forEach((item, index) => {
@@ -354,7 +355,6 @@
             });
         }
 
-        // Mostrar u ocultar el menú desplegable al hacer clic en el botón circular izquierdo
         btnMenuCircular.addEventListener('click', (e) => {
             e.stopPropagation();
             const estaVisible = selectorVideoWrapper.style.display === 'flex';
@@ -371,13 +371,35 @@
 
         selectorVideoWrapper.addEventListener('click', (e) => e.stopPropagation());
 
-        // Al hacer clic en el botón de "Agregar archivo local" dentro del menú desplegable
+        // Botón para disparar la carga de archivos locales
         btnAgregarArchivo.addEventListener('click', (e) => {
             e.stopPropagation();
-            inputArchivoOculto.click(); // Abre el explorador de archivos del teléfono
+            inputArchivoOculto.click();
         });
 
-        // Cuando el usuario selecciona un archivo nuevo de su dispositivo
+        // Botón para borrar el elemento actualmente seleccionado en el menú
+        btnBorrarItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const indexSeleccionado = selectorVideo.selectedIndex;
+            
+            if (listaMultimedia.length <= 1) {
+                alert("No puedes borrar el último elemento predeterminado.");
+                return;
+            }
+
+            if (indexSeleccionado >= 0) {
+                const nombreBorrado = listaMultimedia[indexSeleccionado].nombre;
+                if (confirm(`¿Deseas eliminar "${nombreBorrado}" de tu lista guardada?`)) {
+                    listaMultimedia.splice(indexSeleccionado, 1);
+                    guardarBaseDatos(listaMultimedia);
+                    actualizarSelect();
+                    selectorVideo.selectedIndex = 0;
+                    cargarArchivoSeleccionado();
+                    selectorVideoWrapper.style.display = 'none';
+                }
+            }
+        });
+
         inputArchivoOculto.addEventListener('change', (e) => {
             const archivo = e.target.files[0];
             if (!archivo) return;
@@ -386,16 +408,12 @@
             const esGif = nombreArchivo.toLowerCase().endsWith('.gif');
             const tipoDetectado = esGif ? 'gif' : 'video';
 
-            // Pide el nombre descriptivo que aparecerá en el pop-up/menú desplegable
-            let descripcionCustom = prompt("Escribe el nombre descriptivo para este efecto (ej. Murciélago Volando):", nombreArchivo);
+            let descripcionCustom = prompt("Escribe el nombre descriptivo para este efecto:", nombreArchivo);
             if (!descripcionCustom || descripcionCustom.trim() === "") {
                 descripcionCustom = nombreArchivo;
             }
 
-            // Creamos la ruta de objeto local temporal para reproducirlo inmediatamente
             const urlLocal = URL.createObjectURL(archivo);
-
-            // Guardamos en la "base de datos" local del navegador
             const nuevoEfecto = {
                 nombre: descripcionCustom,
                 archivo: urlLocal,
@@ -406,7 +424,6 @@
             guardarBaseDatos(listaMultimedia);
             actualizarSelect();
 
-            // Seleccionamos automáticamente el nuevo elemento recién creado
             selectorVideo.selectedIndex = selectorVideo.options.length - 1;
             cargarArchivoSeleccionado();
             selectorVideoWrapper.style.display = 'none';
@@ -429,7 +446,6 @@
             });
         });
 
-        // Función inteligente para cargar el archivo activo en pantalla
         function cargarArchivoSeleccionado() {
             if (selectorVideo.options.length === 0) return;
             const selectedOption = selectorVideo.options[selectorVideo.selectedIndex];
@@ -439,24 +455,23 @@
             if (tipoActual === 'gif') {
                 videoMultimedia.pause();
                 canvas.style.display = 'none';
-                btnColor.style.display = 'none';
+                btnColor.style.display = 'none'; // Los GIF no usan Chroma key manual
                 
                 imagenGif.src = archivoUrl;
                 imagenGif.style.display = 'block';
             } else {
                 imagenGif.style.display = 'none';
-                btnColor.style.display = 'block';
+                btnColor.style.display = 'block'; // El botón de color siempre visible para videos MP4
                 canvas.style.display = 'block';
                 
                 videoMultimedia.src = archivoUrl;
-                videoMultimedia.muted = false; // Mantiene el sonido original del MP4
-                videoMultimedia.play().catch(e => console.log("Audio autoreproducido pendiente de interacción.", e));
+                videoMultimedia.muted = false;
+                videoMultimedia.play().catch(e => console.log("Audio pendiente de interacción.", e));
             }
         }
 
         selectorVideo.addEventListener('change', cargarArchivoSeleccionado);
 
-        // Inicializar permisos de cámara y arranque principal
         async function iniciarExperiencia() {
             mensajeError.innerText = "Solicitando permisos de cámara...";
             try {
@@ -472,7 +487,6 @@
                     pantallaInicio.style.display = 'none';
                     panelControles.style.display = 'flex';
                     
-                    // Activar pantalla completa si el navegador lo permite
                     if (document.documentElement.requestFullscreen) {
                         document.documentElement.requestFullscreen().catch(() => {});
                     }
@@ -486,17 +500,16 @@
             }
         }
 
-        // Motor Chroma Key en tiempo real por fotogramas
         videoMultimedia.addEventListener('loadedmetadata', () => {
             canvas.width = videoMultimedia.videoWidth;
             canvas.height = videoMultimedia.videoHeight;
             if (!procesando) {
                 procesando = true;
-                procesarChromaKey();
+                procesarChrogaKey();
             }
         });
 
-        function procesarChromaKey() {
+        function procesarChrogaKey() {
             if (tipoActual === 'video' && !videoMultimedia.paused && !videoMultimedia.ended) {
                 ctx.drawImage(videoMultimedia, 0, 0, canvas.width, canvas.height);
                 let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -517,7 +530,7 @@
                 }
                 ctx.putImageData(frame, 0, 0);
             }
-            requestAnimationFrame(procesarChromaKey);
+            requestAnimationFrame(procesarChrogaKey);
         }
 
         btnIniciar.addEventListener('click', iniciarExperiencia);
