@@ -21,13 +21,21 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
 #btn-aprobar-dispositivo { background: #28a745; color: white; }
 #btn-rechazar-dispositivo { background: #dc3545; color: white; }
 
-#panel-controles { position: absolute; top: 20px; left: 20px; z-index: 5000; display: flex; gap: 10px; align-items: center; }
+#modal-terminos, #modal-ayuda { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+#contenido-modal, #contenido-ayuda { background: #1c1c1c; color: #fff; padding: 25px; border-radius: 12px; max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.7); font-size: 13px; line-height: 1.5; border: 1px solid #444; }
+#contenido-modal h3, #contenido-ayuda h3 { margin-top: 0; color: #28a745; font-size: 18px; }
+.btn-cerrar-modal { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-top: 15px; cursor: pointer; float: right; font-weight: bold; }
+
+#panel-controles { position: absolute; top: 20px; left: 20px; z-index: 5000; display: flex; gap: 10px; align-items: center; transition: opacity 0.3s ease; }
 .btn-flotante { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(0, 0, 0, 0.4); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: background-color 0.2s; }
 .btn-flotante:active { background-color: rgba(0, 0, 0, 0.7); }
 
 #btn-menu-circular::after { content: "⚙️"; font-size: 16px; }
 #btn-mover-efecto::after { content: "✋"; font-size: 16px; }
 #btn-mover-efecto.activo { background-color: #28a745; border-color: #fff; }
+#btn-cambiar-camara::after { content: "🔄"; font-size: 16px; }
+#btn-toggle-interfaz::after { content: "👁️"; font-size: 16px; }
+#btn-ayuda::after { content: "❓"; font-size: 16px; }
 #btn-terminos::after { content: "📄"; font-size: 16px; }
 
 #btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; }
@@ -51,16 +59,10 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
 
 #aviso-premium { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(220, 53, 69, 0.95); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 9999; display: none; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.6); line-height: 1.4; }
 
-#modal-terminos { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-#contenido-modal { background: #1c1c1c; color: #fff; padding: 25px; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 5px 20px rgba(0,0,0,0.7); font-size: 13px; line-height: 1.5; border: 1px solid #444; }
-#contenido-modal h3 { margin-top: 0; color: #28a745; font-size: 18px; }
-#btn-cerrar-modal { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-top: 15px; cursor: pointer; float: right; font-weight: bold; }
-
 #btn-color { position: absolute; top: 20px; right: 20px; width: 25px; height: 25px; border-radius: 50%; background-color: #00ff00; cursor: pointer; z-index: 5000; opacity: 0.4; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.8); display: block; }
 #menu-colores { display: none; position: absolute; top: 55px; right: 20px; background: rgba(0,0,0,0.9); padding: 10px; border-radius: 8px; z-index: 5001; flex-direction: column; gap: 12px; }
 .opcion-color { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
 
-/* Control fluido de cámara y canvas abarcando siempre 100% de la pantalla sin importar rotación */
 #video-camara { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: 1; background-color: #000; }
 #video-multimedia, #imagen-fuente-oculta { display: none; }
 #capa-efecto-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; pointer-events: none; display: flex; justify-content: center; align-items: center; }
@@ -85,13 +87,30 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
     </div>
 </div>
 
+<!-- Modal de Ayuda con Guía Detallada -->
+<div id="modal-ayuda">
+    <div id="contenido-ayuda">
+        <h3>📖 Manual de Ayuda y Funcionalidades</h3>
+        <p>Bienvenido a <strong>Estudio AR</strong>. Aquí tienes una descripción detallada de cada herramienta:</p>
+        <ul>
+            <li><strong>⚙️ Menú de Efectos:</strong> Permite seleccionar el video o GIF transparente que deseas proyectar sobre tu cámara. Incluye el efecto predeterminado de <em>La Llorona</em> y la opción de agregar tus propios archivos locales (MP4 o GIF).</li>
+            <li><strong>✋ Mover y Escalar:</strong> Habilita el control táctil para arrastrar el efecto por la pantalla y ajustar su tamaño mediante la barra deslizante de Zoom (Función PRO / Superusuario).</li>
+            <li><strong>🔄 Cambiar Cámara:</strong> Alterna dinámicamente entre la cámara frontal, trasera o cámaras externas conectadas por USB/Tipo-C.</li>
+            <li><strong>👁️ Ocultar/Mostrar Controles:</strong> Oculta temporalmente toda la interfaz de botones para que puedas grabar o capturar la pantalla limpia y libre de distracciones.</li>
+            <li><strong>🔴 Grabar Video:</strong> Inicia la grabación de la transmisión combinada (cámara + efecto de realidad aumentada). Al detenerla, te pedirá un nombre personalizado para guardar el archivo de video en tu dispositivo.</li>
+            <li><strong>🎨 Filtro de Croma (Círculo Verde/Color superior):</strong> Permite seleccionar el color clave del fondo (Verde, Azul o Negro) para volverlo totalmente transparente en tiempo real.</li>
+        </ul>
+        <button id="btn-cerrar-ayuda" class="btn-cerrar-modal">Cerrar Ayuda</button>
+    </div>
+</div>
+
 <div id="modal-terminos">
     <div id="contenido-modal">
         <h3>📄 Términos, Condiciones y Privacidad</h3>
         <p><strong>Privacidad de Datos:</strong> Estudio AR utiliza la cámara de tu dispositivo exclusivamente en tiempo real para superponer los efectos visuales seleccionados. 
         <br><br><strong>Seguridad:</strong> Ninguna imagen, video ni flujo de cámara es grabado ni transmitido a servidores externos. Todo el procesamiento ocurre localmente.
         <br><br><strong>Suscripción:</strong> Funciones avanzadas por $30 MXN bimestrales gestionados mediante Google Play Billing.</p>
-        <button id="btn-cerrar-modal">Entendido</button>
+        <button id="btn-cerrar-terminos" class="btn-cerrar-modal">Entendido</button>
     </div>
 </div>
 
@@ -108,6 +127,9 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
             </div>
         </div>
         <div id="btn-mover-efecto" class="btn-flotante" title="Mover y Escalar"></div>
+        <div id="btn-cambiar-camara" class="btn-flotante" title="Cambiar Cámara"></div>
+        <div id="btn-toggle-interfaz" class="btn-flotante" title="Ocultar/Mostrar Controles"></div>
+        <div id="btn-ayuda" class="btn-flotante" title="Ayuda y Manual"></div>
         <div id="btn-terminos" class="btn-flotante" title="Términos y Privacidad"></div>
         <div id="btn-grabar" title="Grabar Video"></div>
     </div>
@@ -187,7 +209,13 @@ const inputArchivoOculto = document.getElementById('input-archivo-oculto');
 const btnMoverEfecto = document.getElementById('btn-mover-efecto');
 const btnTerminos = document.getElementById('btn-terminos');
 const modalTerminos = document.getElementById('modal-terminos');
-const btnCerrarModal = document.getElementById('btn-cerrar-modal');
+const btnCerrarTerminos = document.getElementById('btn-cerrar-terminos');
+
+// Referencias de Ayuda
+const btnAyuda = document.getElementById('btn-ayuda');
+const modalAyuda = document.getElementById('modal-ayuda');
+const btnCerrarAyuda = document.getElementById('btn-cerrar-ayuda');
+
 const btnGrabar = document.getElementById('btn-grabar');
 const panelEscala = document.getElementById('panel-escala');
 const sliderEscala = document.getElementById('slider-escala');
@@ -195,6 +223,9 @@ const sliderEscala = document.getElementById('slider-escala');
 const btnColor = document.getElementById('btn-color');
 const menuColores = document.getElementById('menu-colores');
 const opcionesColor = document.querySelectorAll('.opcion-color');
+
+const btnCambiarCamara = document.getElementById('btn-cambiar-camara');
+const btnToggleInterfaz = document.getElementById('btn-toggle-interfaz');
 
 let colorFiltro = 'verde'; 
 let procesando = false;
@@ -209,14 +240,33 @@ let startX = 0, startY = 0;
 let mediaRecorder;
 let fragmentosVideo = [];
 let estaGrabando = false;
+let nombreArchivoGrabado = "";
+
+let listaCamaras = [];
+let indiceCamaraActual = 0;
+let controlesVisibles = true;
 
 function mostrarAviso() {
     avisoPremium.style.display = 'block';
     setTimeout(() => { avisoPremium.style.display = 'none'; }, 5000);
 }
 
+// Eventos de Modales
 btnTerminos.addEventListener('click', (e) => { e.stopPropagation(); modalTerminos.style.display = 'flex'; });
-btnCerrarModal.addEventListener('click', () => { modalTerminos.style.display = 'none'; });
+btnCerrarTerminos.addEventListener('click', () => { modalTerminos.style.display = 'none'; });
+
+btnAyuda.addEventListener('click', (e) => { e.stopPropagation(); modalAyuda.style.display = 'flex'; });
+btnCerrarAyuda.addEventListener('click', () => { modalAyuda.style.display = 'none'; });
+
+// Ocultar / Mostrar controles incluyendo el botón de ayuda
+btnToggleInterfaz.addEventListener('click', (e) => {
+    e.stopPropagation();
+    controlesVisibles = !controlesVisibles;
+    panelControles.style.opacity = controlesVisibles ? '1' : '0';
+    panelControles.style.pointerEvents = controlesVisibles ? 'auto' : 'none';
+    btnColor.style.display = controlesVisibles ? 'block' : 'none';
+    panelEscala.style.display = (controlesVisibles && modoMoverActivo) ? 'flex' : 'none';
+});
 
 function actualizarSelect() {
     selectorVideo.innerHTML = "";
@@ -342,6 +392,12 @@ btnGrabar.addEventListener('click', () => {
 });
 
 function iniciarGrabacion() {
+    let nombreSugerido = `EstudioAR_${Date.now()}`;
+    nombreArchivoGrabado = prompt("Escribe el nombre para tu video grabado:", nombreSugerido);
+    if (!nombreArchivoGrabado || nombreArchivoGrabado.trim() === "") {
+        nombreArchivoGrabado = nombreSugerido;
+    }
+
     fragmentosVideo = [];
     const streamCanvas = canvas.captureStream(30); 
     const streamCamara = videoCamara.srcObject;
@@ -361,10 +417,14 @@ function iniciarGrabacion() {
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = urlBlob;
-        a.download = `EstudioAR_${Date.now()}.webm`;
+        a.download = `${nombreArchivoGrabado.replace(/[^a-z0-9_]/gi, '_')}.webm`;
         document.body.appendChild(a);
         a.click();
-        setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(urlBlob); }, 100);
+        setTimeout(() => { 
+            document.body.removeChild(a); 
+            window.URL.revokeObjectURL(urlBlob); 
+            alert(`¡Video guardado con éxito! Revisa la carpeta de descargas de tu dispositivo.`);
+        }, 100);
     };
 
     mediaRecorder.start();
@@ -408,14 +468,12 @@ function cargarArchivoSeleccionado() {
 
     if (tipoActual === 'gif') {
         videoMultimedia.pause();
-        btnColor.style.display = 'block';
+        btnColor.style.display = controlesVisibles ? 'block' : 'none';
         imagenFuenteOculta.src = archivoUrl;
-        imagenFuenteOculta.onload = () => {
-            procesarChromaKeyGIF();
-        };
+        imagenFuenteOculta.onload = () => { procesarChromaKeyGIF(); };
     } else {
         imagenFuenteOculta.src = "";
-        btnColor.style.display = 'block';
+        btnColor.style.display = controlesVisibles ? 'block' : 'none';
         videoMultimedia.src = archivoUrl;
         videoMultimedia.muted = false;
         videoMultimedia.play().catch(() => {});
@@ -437,7 +495,6 @@ function verificarAccesoSuperusuario() {
             lanzarApp();
         } else {
             modal2fa.style.display = 'flex';
-
             btnAprobarDispositivo.onclick = () => {
                 dispositivosGuardados.push(deviceIdActual);
                 localStorage.setItem(dispositivosAutorizadosKey, JSON.stringify(dispositivosGuardados));
@@ -445,7 +502,6 @@ function verificarAccesoSuperusuario() {
                 esSuperUsuario = true;
                 lanzarApp();
             };
-
             btnRechazarDispositivo.onclick = () => {
                 modal2fa.style.display = 'none';
                 esSuperUsuario = false;
@@ -458,24 +514,64 @@ function verificarAccesoSuperusuario() {
     }
 }
 
+async function iniciarCamara(deviceIdEspecifico = null) {
+    if (videoCamara.srcObject) {
+        videoCamara.srcObject.getTracks().forEach(track => track.stop());
+    }
+
+    let restriccionesVideo;
+    if (deviceIdEspecifico) {
+        restriccionesVideo = { deviceId: { exact: deviceIdEspecifico }, width: { ideal: 1920 }, height: { ideal: 1080 } };
+    } else {
+        let modoActualCamara = listaCamaras.length > 0 ? (indiceCamaraActual % 2 === 0 ? "user" : "environment") : "user";
+        restriccionesVideo = { facingMode: modoActualCamara, width: { ideal: 1920 }, height: { ideal: 1080 } };
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: restriccionesVideo, audio: true });
+        videoCamara.srcObject = stream;
+        videoCamara.play();
+    } catch (err) {
+        const streamFallback = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        videoCamara.srcObject = streamFallback;
+        videoCamara.play();
+    }
+}
+
+async function detectarDispositivosCamara() {
+    try {
+        const dispositivos = await navigator.mediaDevices.enumerateDevices();
+        listaCamaras = dispositivos.filter(d => d.kind === 'videoinput');
+    } catch (e) {
+        console.error("Error al listar cámaras:", e);
+    }
+}
+
+btnCambiarCamara.addEventListener('click', async () => {
+    await detectarDispositivosCamara();
+    if (listaCamaras.length > 1) {
+        indiceCamaraActual = (indiceCamaraActual + 1) % listaCamaras.length;
+        await iniciarCamara(listaCamaras[indiceCamaraActual].deviceId);
+    } else {
+        indiceCamaraActual++;
+        await iniciarCamara();
+    }
+});
+
 async function lanzarApp() {
     mensajeError.innerText = "Solicitando permisos de cámara...";
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1080 } },
-            audio: true 
-        });
-        videoCamara.srcObject = stream;
+        await detectarDispositivosCamara();
+        await iniciarCamara();
+        
         videoCamara.onloadedmetadata = () => {
-            videoCamara.play();
             pantallaInicio.style.display = 'none';
             panelControles.style.display = 'flex';
             
-            // Forzar pantalla completa absoluta para ocultar barra de estado y navegación en cualquier navegador móvil
             const elem = document.documentElement;
             if (elem.requestFullscreen) {
                 elem.requestFullscreen().catch(() => {});
-            } else if (elem.webkitRequestFullscreen) { /* Safari / iOS webkit */
+            } else if (elem.webkitRequestFullscreen) {
                 elem.webkitRequestFullscreen();
             }
 
@@ -487,7 +583,6 @@ async function lanzarApp() {
     }
 }
 
-// Reajuste automático dinámico al girar la pantalla (Landscape / Portrait)
 window.addEventListener('resize', () => {
     if (videoMultimedia.videoWidth) {
         canvas.width = videoMultimedia.videoWidth;
