@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
 <title>Estudio AR: Versión Comercial Blindada</title>
 <style>
+/* Reset absoluto para cubrir el 100% de la pantalla y ocultar desbordamientos */
 html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100vh; overflow: hidden; font-family: sans-serif; -webkit-touch-callout: none; }
 #contenedor-principal { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; }
 
@@ -25,7 +26,7 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
 #contenido-modal h3 { margin-top: 0; color: #28a745; font-size: 18px; }
 #btn-cerrar-modal { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-top: 15px; cursor: pointer; float: right; font-weight: bold; }
 
-#panel-controles { position: absolute; top: 20px; left: 20px; z-index: 5000; display: flex; gap: 10px; align-items: center; transition: opacity 0.3s ease; }
+#panel-controles { position: absolute; top: 20px; left: 20px; z-index: 5000; display: flex; gap: 10px; align-items: center; }
 .btn-flotante { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(0, 0, 0, 0.4); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: background-color 0.2s; }
 .btn-flotante:active { background-color: rgba(0, 0, 0, 0.7); }
 
@@ -34,7 +35,10 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
 #btn-mover-efecto.activo { background-color: #28a745; border-color: #fff; }
 #btn-terminos::after { content: "📄"; font-size: 16px; }
 #btn-cambiar-camara::after { content: "🔄"; font-size: 16px; }
+
+/* Control del botón del ojo */
 #btn-toggle-interfaz::after { content: "👁️"; font-size: 16px; }
+#btn-toggle-interfaz.oculto::after { content: "🙈"; font-size: 16px; }
 
 #btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; }
 #btn-grabar::after { content: "🔴"; font-size: 14px; }
@@ -52,12 +56,16 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
 #btn-agregar-archivo { background: #1b4d3e; }
 #btn-borrar-item { background: #6c2222; }
 
+#panel-escala { display: none; position: absolute; top: 70px; left: 20px; background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 8px; z-index: 5000; color: white; font-size: 12px; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+#slider-escala { width: 100px; cursor: pointer; }
+
 #aviso-premium { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(220, 53, 69, 0.95); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 9999; display: none; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.6); line-height: 1.4; }
 
-#btn-color { position: absolute; top: 20px; right: 20px; width: 25px; height: 25px; border-radius: 50%; background-color: #00ff00; cursor: pointer; z-index: 5000; opacity: 0.4; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.8); display: block; }
+#btn-color { position: absolute; top: 20px; right: 20px; width: 25px; height: 25px; border-radius: 50%; background-color: #00ff00; cursor: pointer; z-index: 5000; opacity: 0.4; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.8); display: block; transition: opacity 0.3s; }
 #menu-colores { display: none; position: absolute; top: 55px; right: 20px; background: rgba(0,0,0,0.9); padding: 10px; border-radius: 8px; z-index: 5001; flex-direction: column; gap: 12px; }
 .opcion-color { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
 
+/* Control fluido de cámara y canvas abarcando siempre 100% de la pantalla sin importar rotación */
 #video-camara { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: 1; background-color: #000; }
 #video-multimedia, #imagen-fuente-oculta { display: none; }
 #capa-efecto-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; pointer-events: none; display: flex; justify-content: center; align-items: center; }
@@ -96,7 +104,7 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
     <div id="aviso-premium">⚠️ Función bloqueada. Desbloquea movimiento, zoom y croma completo suscribiéndote por solo $30 bimestrales.</div>
 
     <div id="panel-controles">
-        <div id="btn-menu-circular" class="btn-flotante">
+        <div id="btn-menu-circular" class="btn-flotante control-ocultable">
             <span id="tooltip-texto">Menú de Efectos</span>
             <div id="selector-video-wrapper">
                 <select id="selector-video"></select>
@@ -104,11 +112,17 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
                 <button id="btn-borrar-item" class="btn-accion-menu">🗑️ Borrar seleccionado</button>
             </div>
         </div>
-        <div id="btn-mover-efecto" class="btn-flotante" title="Mover y Escalar"></div>
-        <div id="btn-cambiar-camara" class="btn-flotante" title="Cambiar Cámara"></div>
+        <div id="btn-mover-efecto" class="btn-flotante control-ocultable" title="Mover y Escalar"></div>
+        <div id="btn-cambiar-camara" class="btn-flotante control-ocultable" title="Cambiar Cámara"></div>
+        <div id="btn-terminos" class="btn-flotante control-ocultable" title="Términos y Privacidad"></div>
+        <!-- Estos dos botones NUNCA se ocultan con el ojo para permitir grabar limpiamente -->
         <div id="btn-toggle-interfaz" class="btn-flotante" title="Ocultar/Mostrar Controles"></div>
-        <div id="btn-terminos" class="btn-flotante" title="Términos y Privacidad"></div>
         <div id="btn-grabar" title="Grabar Video"></div>
+    </div>
+
+    <div id="panel-escala">
+        <span>Zoom:</span>
+        <input type="range" id="slider-escala" min="0.3" max="2.5" step="0.05" value="1">
     </div>
 
     <input type="file" id="input-archivo-oculto" accept="video/mp4,image/gif,image/webp">
@@ -183,6 +197,8 @@ const btnTerminos = document.getElementById('btn-terminos');
 const modalTerminos = document.getElementById('modal-terminos');
 const btnCerrarModal = document.getElementById('btn-cerrar-modal');
 const btnGrabar = document.getElementById('btn-grabar');
+const panelEscala = document.getElementById('panel-escala');
+const sliderEscala = document.getElementById('slider-escala');
 
 const btnColor = document.getElementById('btn-color');
 const menuColores = document.getElementById('menu-colores');
@@ -190,6 +206,7 @@ const opcionesColor = document.querySelectorAll('.opcion-color');
 
 const btnCambiarCamara = document.getElementById('btn-cambiar-camara');
 const btnToggleInterfaz = document.getElementById('btn-toggle-interfaz');
+const controlesOcultables = document.querySelectorAll('.control-ocultable');
 
 let colorFiltro = 'verde'; 
 let procesando = false;
@@ -201,8 +218,6 @@ let posX = 0, posY = 0, escalaActual = 1;
 let arrastrando = false;
 let startX = 0, startY = 0;
 
-let distanciaInicialPellizco = null;
-
 let mediaRecorder;
 let fragmentosVideo = [];
 let estaGrabando = false;
@@ -210,7 +225,7 @@ let nombreArchivoGrabado = "";
 
 let listaCamaras = [];
 let indiceCamaraActual = 0;
-let controlesVisibles = true;
+let interfazOculta = false;
 
 function mostrarAviso() {
     avisoPremium.style.display = 'block';
@@ -220,12 +235,26 @@ function mostrarAviso() {
 btnTerminos.addEventListener('click', (e) => { e.stopPropagation(); modalTerminos.style.display = 'flex'; });
 btnCerrarModal.addEventListener('click', () => { modalTerminos.style.display = 'none'; });
 
+// Lógica exacta del botón del ojito: oculta el resto de controles, cambia el icono y mantiene visible el ojo y el botón de grabar
 btnToggleInterfaz.addEventListener('click', (e) => {
     e.stopPropagation();
-    controlesVisibles = !controlesVisibles;
-    panelControles.style.opacity = controlesVisibles ? '1' : '0';
-    panelControles.style.pointerEvents = controlesVisibles ? 'auto' : 'none';
-    btnColor.style.display = controlesVisibles ? 'block' : 'none';
+    interfazOculta = !interfazOculta;
+    
+    controlesOcultables.forEach(el => {
+        el.style.display = interfazOculta ? 'none' : 'flex';
+    });
+
+    btnToggleInterfaz.classList.toggle('oculto', interfazOculta);
+    btnColor.style.opacity = interfazOculta ? '0' : '0.4';
+    btnColor.style.pointerEvents = interfazOculta ? 'none' : 'auto';
+    
+    if (interfazOculta) {
+        selectorVideoWrapper.style.display = 'none';
+        menuColores.style.display = 'none';
+        panelEscala.style.display = 'none';
+    } else if (modoMoverActivo) {
+        panelEscala.style.display = 'flex';
+    }
 });
 
 function actualizarSelect() {
@@ -250,7 +279,7 @@ document.addEventListener('click', () => {
     selectorVideoWrapper.style.display = 'none';
     btnMenuCircular.classList.remove('activo-tactil');
     menuColores.style.display = 'none';
-    btnColor.style.opacity = '0.4';
+    if (!interfazOculta) btnColor.style.opacity = '0.4';
 });
 
 selectorVideoWrapper.addEventListener('click', (e) => e.stopPropagation());
@@ -307,83 +336,45 @@ btnMoverEfecto.addEventListener('click', (e) => {
     }
     modoMoverActivo = !modoMoverActivo;
     btnMoverEfecto.classList.toggle('activo', modoMoverActivo);
+    panelEscala.style.display = (modoMoverActivo && !interfazOculta) ? 'flex' : 'none';
+});
+
+sliderEscala.addEventListener('input', (e) => {
+    if (!esSuperUsuario) return;
+    escalaActual = parseFloat(e.target.value);
+    aplicarTransformacion();
 });
 
 function aplicarTransformacion() {
     canvas.style.transform = `translate(${posX}px, ${posY}px) scale(${escalaActual})`;
 }
 
-canvas.addEventListener('touchstart', (e) => {
-    if (!modoMoverActivo || !esSuperUsuario) return;
-    if (e.touches.length === 1) {
+['mousedown', 'touchstart'].forEach(evt => {
+    canvas.addEventListener(evt, (e) => {
+        if (!modoMoverActivo || !esSuperUsuario) return;
         arrastrando = true;
-        startX = e.touches[0].clientX - posX;
-        startY = e.touches[0].clientY - posY;
-        distanciaInicialPellizco = null;
-    } else if (e.touches.length === 2) {
-        arrastrando = false;
-        distanciaInicialPellizco = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
-        );
-    }
-    e.preventDefault();
-}, { passive: false });
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        startX = clientX - posX;
+        startY = clientY - posY;
+        e.preventDefault();
+    });
+});
 
-canvas.addEventListener('touchmove', (e) => {
-    if (!modoMoverActivo || !esSuperUsuario) return;
-    if (e.touches.length === 1 && arrastrando) {
-        posX = e.touches[0].clientX - startX;
-        posY = e.touches[0].clientY - startY;
+['mousemove', 'touchmove'].forEach(evt => {
+    window.addEventListener(evt, (e) => {
+        if (!arrastrando || !modoMoverActivo) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        posX = clientX - startX;
+        posY = clientY - startY;
         aplicarTransformacion();
-    } else if (e.touches.length === 2 && distanciaInicialPellizco) {
-        let distanciaActual = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
-        );
-        let factor = distanciaActual / distanciaInicialPellizco;
-        let nuevaEscala = escalaActual * factor;
-        if (nuevaEscala >= 0.3 && nuevaEscala <= 3.5) {
-            escalaActual = nuevaEscala;
-            aplicarTransformacion();
-        }
-        distanciaInicialPellizco = distanciaActual;
-    }
-    e.preventDefault();
-}, { passive: false });
-
-canvas.addEventListener('touchend', (e) => {
-    if (e.touches.length < 2) distanciaInicialPellizco = null;
-    if (e.touches.length === 0) arrastrando = false;
+    });
 });
 
-canvas.addEventListener('mousedown', (e) => {
-    if (!modoMoverActivo || !esSuperUsuario) return;
-    arrastrando = true;
-    startX = e.clientX - posX;
-    startY = e.clientY - posY;
-    e.preventDefault();
+['mouseup', 'touchend'].forEach(evt => {
+    window.addEventListener(evt, () => { arrastrando = false; });
 });
-
-window.addEventListener('mousemove', (e) => {
-    if (!arrastrando || !modoMoverActivo || !esSuperUsuario) return;
-    posX = e.clientX - startX;
-    posY = e.clientY - startY;
-    aplicarTransformacion();
-});
-
-window.addEventListener('mouseup', () => { arrastrando = false; });
-
-canvas.addEventListener('wheel', (e) => {
-    if (!modoMoverActivo || !esSuperUsuario) return;
-    e.preventDefault();
-    let factorZoom = e.deltaY < 0 ? 1.1 : 0.9;
-    let nuevaEscala = escalaActual * factorZoom;
-    if (nuevaEscala >= 0.3 && nuevaEscala <= 3.5) {
-        escalaActual = nuevaEscala;
-        aplicarTransformacion();
-    }
-}, { passive: false });
 
 btnGrabar.addEventListener('click', () => {
     if (!estaGrabando) { iniciarGrabacion(); } else { detenerGrabacion(); }
@@ -392,14 +383,14 @@ btnGrabar.addEventListener('click', () => {
 function iniciarGrabacion() {
     let nombreSugerido = `EstudioAR_${Date.now()}`;
     nombreArchivoGrabado = prompt("Escribe el nombre para tu video grabado:", nombreSugerido);
+    
     if (!nombreArchivoGrabado || nombreArchivoGrabado.trim() === "") {
         nombreArchivoGrabado = nombreSugerido;
     }
 
     fragmentosVideo = [];
+    const streamCanvas = canvas.captureStream(30); 
     const streamCamara = videoCamara.srcObject;
-    const streamCanvas = canvas.captureStream(30);
-
     const tracksCombinados = [...streamCamara.getVideoTracks(), ...streamCanvas.getVideoTracks()];
     if (videoMultimedia.srcObject && videoMultimedia.srcObject.getAudioTracks().length > 0) {
         tracksCombinados.push(...videoMultimedia.srcObject.getAudioTracks());
@@ -471,12 +462,14 @@ function cargarArchivoSeleccionado() {
 
     if (tipoActual === 'gif') {
         videoMultimedia.pause();
-        btnColor.style.display = controlesVisibles ? 'block' : 'none';
+        btnColor.style.display = interfazOculta ? 'none' : 'block';
         imagenFuenteOculta.src = archivoUrl;
-        imagenFuenteOculta.onload = () => { procesarChromaKeyGIF(); };
+        imagenFuenteOculta.onload = () => {
+            procesarChromaKeyGIF();
+        };
     } else {
         imagenFuenteOculta.src = "";
-        btnColor.style.display = controlesVisibles ? 'block' : 'none';
+        btnColor.style.display = interfazOculta ? 'none' : 'block';
         videoMultimedia.src = archivoUrl;
         videoMultimedia.muted = false;
         videoMultimedia.play().catch(() => {});
@@ -589,7 +582,6 @@ async function lanzarApp() {
 }
 
 window.addEventListener('resize', () => {
-    selectorVideoWrapper.style.display = 'none';
     if (videoMultimedia.videoWidth) {
         canvas.width = videoMultimedia.videoWidth;
         canvas.height = videoMultimedia.videoHeight;
