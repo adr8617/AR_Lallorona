@@ -34,13 +34,20 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
 #btn-mover-efecto::after { content: "✋"; font-size: 16px; }
 #btn-mover-efecto.activo { background-color: #28a745; border-color: #fff; }
 #btn-cambiar-camara::after { content: "🔄"; font-size: 16px; }
-#btn-toggle-interfaz::after { content: "👁️"; font-size: 16px; }
+
+/* Transición fluida del botón de interfaz (ojo abierto / ojo cerrado con pestañas) */
+#btn-toggle-interfaz { position: relative; width: 36px; height: 36px; border-radius: 50%; background-color: rgba(0, 0, 0, 0.4); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); transition: all 0.3s ease; }
+#btn-toggle-interfaz::after { content: "👁️"; font-size: 16px; transition: transform 0.3s ease, opacity 0.3s ease; display: inline-block; }
+#btn-toggle-interfaz.oculto::after { content: " ˗ˏˋ 👁️ ˎˊ˗ "; transform: scaleY(0.2); opacity: 0.8; font-size: 14px; }
+
 #btn-ayuda::after { content: "❓"; font-size: 16px; }
 #btn-terminos::after { content: "📄"; font-size: 16px; }
 
-#btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; }
+/* Botón de Grabar Inteligente (Círculo / Cuadrado) */
+#btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: all 0.3s; }
 #btn-grabar::after { content: "🔴"; font-size: 14px; }
-#btn-grabar.grabando { background-color: rgba(255, 0, 0, 0.9); animation: parpadeo 1s infinite; }
+#btn-grabar.grabando { background-color: rgba(255, 0, 0, 0.9); border-radius: 6px; animation: parpadeo 1s infinite; }
+#btn-grabar.grabando::after { content: "⏹️"; font-size: 14px; }
 @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
 #tooltip-texto { position: absolute; left: 48px; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.85); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 13px; white-space: nowrap; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
@@ -87,18 +94,17 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
     </div>
 </div>
 
-<!-- Modal de Ayuda con Guía Detallada -->
 <div id="modal-ayuda">
     <div id="contenido-ayuda">
         <h3>📖 Manual de Ayuda y Funcionalidades</h3>
         <p>Bienvenido a <strong>Estudio AR</strong>. Aquí tienes una descripción detallada de cada herramienta:</p>
         <ul>
-            <li><strong>⚙️ Menú de Efectos:</strong> Permite seleccionar el video o GIF transparente que deseas proyectar sobre tu cámara. Incluye el efecto predeterminado de <em>La Llorona</em> y la opción de agregar tus propios archivos locales (MP4 o GIF).</li>
-            <li><strong>✋ Mover y Escalar:</strong> Habilita el control táctil para arrastrar el efecto por la pantalla y ajustar su tamaño mediante la barra deslizante de Zoom (Función PRO / Superusuario).</li>
-            <li><strong>🔄 Cambiar Cámara:</strong> Alterna dinámicamente entre la cámara frontal, trasera o cámaras externas conectadas por USB/Tipo-C.</li>
-            <li><strong>👁️ Ocultar/Mostrar Controles:</strong> Oculta temporalmente toda la interfaz de botones para que puedas grabar o capturar la pantalla limpia y libre de distracciones.</li>
-            <li><strong>🔴 Grabar Video:</strong> Inicia la grabación de la transmisión combinada (cámara + efecto de realidad aumentada). Al detenerla, te pedirá un nombre personalizado para guardar el archivo de video en tu dispositivo.</li>
-            <li><strong>🎨 Filtro de Croma (Círculo Verde/Color superior):</strong> Permite seleccionar el color clave del fondo (Verde, Azul o Negro) para volverlo totalmente transparente en tiempo real.</li>
+            <li><strong>⚙️ Menú de Efectos:</strong> Permite seleccionar el video o GIF transparente que deseas proyectar sobre tu cámara.</li>
+            <li><strong>✋ Mover y Escalar:</strong> Habilita el control táctil para arrastrar el efecto por la pantalla y ajustar su tamaño con el Zoom.</li>
+            <li><strong>🔄 Cambiar Cámara:</strong> Alterna entre cámara frontal, trasera o externas conectadas.</li>
+            <li><strong>👁️ Ocultar/Mostrar Controles:</strong> Oculta temporalmente los botones para capturar la pantalla limpia (el icono del ojo permanece disponible con una transición suave).</li>
+            <li><strong>🔴 Grabar Video:</strong> Solicita un nombre, inicia la grabación ocultando los demás botones y se convierte en cuadro (⏹️). Al detenerla, guarda el video y restaura la interfaz.</li>
+            <li><strong>🎨 Filtro de Croma:</strong> Selecciona el color clave (Verde, Azul o Negro) para volverlo transparente en tiempo real.</li>
         </ul>
         <button id="btn-cerrar-ayuda" class="btn-cerrar-modal">Cerrar Ayuda</button>
     </div>
@@ -107,8 +113,7 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
 <div id="modal-terminos">
     <div id="contenido-modal">
         <h3>📄 Términos, Condiciones y Privacidad</h3>
-        <p><strong>Privacidad de Datos:</strong> Estudio AR utiliza la cámara de tu dispositivo exclusivamente en tiempo real para superponer los efectos visuales seleccionados. 
-        <br><br><strong>Seguridad:</strong> Ninguna imagen, video ni flujo de cámara es grabado ni transmitido a servidores externos. Todo el procesamiento ocurre localmente.
+        <p><strong>Privacidad de Datos:</strong> Estudio AR utiliza la cámara de tu dispositivo exclusivamente en tiempo real. Ningún flujo es grabado o transmitido externamente.
         <br><br><strong>Suscripción:</strong> Funciones avanzadas por $30 MXN bimestrales gestionados mediante Google Play Billing.</p>
         <button id="btn-cerrar-terminos" class="btn-cerrar-modal">Entendido</button>
     </div>
@@ -118,7 +123,7 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
     <div id="aviso-premium">⚠️ Función bloqueada. Desbloquea movimiento, zoom y croma completo suscribiéndote por solo $30 bimestrales.</div>
 
     <div id="panel-controles">
-        <div id="btn-menu-circular" class="btn-flotante">
+        <div id="btn-menu-circular" class="btn-flotante" data-control="item">
             <span id="tooltip-texto">Menú de Efectos</span>
             <div id="selector-video-wrapper">
                 <select id="selector-video"></select>
@@ -126,11 +131,11 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
                 <button id="btn-borrar-item" class="btn-accion-menu">🗑️ Borrar seleccionado</button>
             </div>
         </div>
-        <div id="btn-mover-efecto" class="btn-flotante" title="Mover y Escalar"></div>
-        <div id="btn-cambiar-camara" class="btn-flotante" title="Cambiar Cámara"></div>
+        <div id="btn-mover-efecto" class="btn-flotante" title="Mover y Escalar" data-control="item"></div>
+        <div id="btn-cambiar-camara" class="btn-flotante" title="Cambiar Cámara" data-control="item"></div>
         <div id="btn-toggle-interfaz" class="btn-flotante" title="Ocultar/Mostrar Controles"></div>
-        <div id="btn-ayuda" class="btn-flotante" title="Ayuda y Manual"></div>
-        <div id="btn-terminos" class="btn-flotante" title="Términos y Privacidad"></div>
+        <div id="btn-ayuda" class="btn-flotante" title="Ayuda y Manual" data-control="item"></div>
+        <div id="btn-terminos" class="btn-flotante" title="Términos y Privacidad" data-control="item"></div>
         <div id="btn-grabar" title="Grabar Video"></div>
     </div>
 
@@ -211,7 +216,6 @@ const btnTerminos = document.getElementById('btn-terminos');
 const modalTerminos = document.getElementById('modal-terminos');
 const btnCerrarTerminos = document.getElementById('btn-cerrar-terminos');
 
-// Referencias de Ayuda
 const btnAyuda = document.getElementById('btn-ayuda');
 const modalAyuda = document.getElementById('modal-ayuda');
 const btnCerrarAyuda = document.getElementById('btn-cerrar-ayuda');
@@ -251,19 +255,23 @@ function mostrarAviso() {
     setTimeout(() => { avisoPremium.style.display = 'none'; }, 5000);
 }
 
-// Eventos de Modales
 btnTerminos.addEventListener('click', (e) => { e.stopPropagation(); modalTerminos.style.display = 'flex'; });
 btnCerrarTerminos.addEventListener('click', () => { modalTerminos.style.display = 'none'; });
 
 btnAyuda.addEventListener('click', (e) => { e.stopPropagation(); modalAyuda.style.display = 'flex'; });
 btnCerrarAyuda.addEventListener('click', () => { modalAyuda.style.display = 'none'; });
 
-// Ocultar / Mostrar controles incluyendo el botón de ayuda
+// Lógica del botón del ojito (El botón del ojo NUNCA desaparece y cambia suavemente)
 btnToggleInterfaz.addEventListener('click', (e) => {
     e.stopPropagation();
     controlesVisibles = !controlesVisibles;
-    panelControles.style.opacity = controlesVisibles ? '1' : '0';
-    panelControles.style.pointerEvents = controlesVisibles ? 'auto' : 'none';
+    
+    const elementosControl = panelControles.querySelectorAll('[data-control="item"]');
+    elementosControl.forEach(el => {
+        el.style.display = controlesVisibles ? 'flex' : 'none';
+    });
+
+    btnToggleInterfaz.classList.toggle('oculto', !controlesVisibles);
     btnColor.style.display = controlesVisibles ? 'block' : 'none';
     panelEscala.style.display = (controlesVisibles && modoMoverActivo) ? 'flex' : 'none';
 });
@@ -387,14 +395,22 @@ function aplicarTransformacion() {
     window.addEventListener(evt, () => { arrastrando = false; });
 });
 
+// Lógica de grabación inteligente con ocultamiento automático de botones
 btnGrabar.addEventListener('click', () => {
-    if (!estaGrabando) { iniciarGrabacion(); } else { detenerGrabacion(); }
+    if (!estaGrabando) { 
+        iniciarGrabacion(); 
+    } else { 
+        detenerGrabacion(); 
+    }
 });
 
 function iniciarGrabacion() {
     let nombreSugerido = `EstudioAR_${Date.now()}`;
     nombreArchivoGrabado = prompt("Escribe el nombre para tu video grabado:", nombreSugerido);
-    if (!nombreArchivoGrabado || nombreArchivoGrabado.trim() === "") {
+    
+    if (nombreArchivoGrabado === null) return; 
+
+    if (nombreArchivoGrabado.trim() === "") {
         nombreArchivoGrabado = nombreSugerido;
     }
 
@@ -430,10 +446,28 @@ function iniciarGrabacion() {
     mediaRecorder.start();
     estaGrabando = true;
     btnGrabar.classList.add('grabando');
+
+    const elementosControl = panelControles.querySelectorAll('[data-control="item"]');
+    elementosControl.forEach(el => { el.style.display = 'none'; });
+    btnToggleInterfaz.style.display = 'none';
+    btnColor.style.display = 'none';
+    panelEscala.style.display = 'none';
 }
 
 function detenerGrabacion() {
-    if (mediaRecorder && estaGrabando) { mediaRecorder.stop(); estaGrabando = false; btnGrabar.classList.remove('grabando'); }
+    if (mediaRecorder && estaGrabando) { 
+        mediaRecorder.stop(); 
+        estaGrabando = false; 
+        btnGrabar.classList.remove('grabando'); 
+
+        const elementosControl = panelControles.querySelectorAll('[data-control="item"]');
+        elementosControl.forEach(el => { el.style.display = 'flex'; });
+        btnToggleInterfaz.style.display = 'flex';
+        btnColor.style.display = 'block';
+        if (modoMoverActivo) panelEscala.style.display = 'flex';
+        controlesVisibles = true;
+        btnToggleInterfaz.classList.remove('oculto');
+    }
 }
 
 btnColor.addEventListener('click', (e) => {
