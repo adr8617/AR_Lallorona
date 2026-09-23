@@ -40,9 +40,12 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
 #btn-toggle-interfaz::after { content: "👁️"; font-size: 16px; }
 #btn-toggle-interfaz.oculto::after { content: "🙈"; font-size: 16px; }
 
-#btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; }
+/* Botón de grabar dinámico */
+#btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: all 0.3s ease; }
 #btn-grabar::after { content: "🔴"; font-size: 14px; }
-#btn-grabar.grabando { background-color: rgba(255, 0, 0, 0.9); animation: parpadeo 1s infinite; }
+#btn-grabar.grabando { background-color: rgba(255, 0, 0, 0.9); border-radius: 8px; animation: parpadeo 1s infinite; }
+#btn-grabar.grabando::after { content: "⏹️"; font-size: 12px; }
+
 @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
 #tooltip-texto { position: absolute; left: 48px; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.85); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 13px; white-space: nowrap; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
@@ -115,7 +118,6 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
         <div id="btn-mover-efecto" class="btn-flotante control-ocultable" title="Mover y Escalar"></div>
         <div id="btn-cambiar-camara" class="btn-flotante control-ocultable" title="Cambiar Cámara"></div>
         <div id="btn-terminos" class="btn-flotante control-ocultable" title="Términos y Privacidad"></div>
-        <!-- Estos dos botones NUNCA se ocultan con el ojo para permitir grabar limpiamente -->
         <div id="btn-toggle-interfaz" class="btn-flotante" title="Ocultar/Mostrar Controles"></div>
         <div id="btn-grabar" title="Grabar Video"></div>
     </div>
@@ -235,7 +237,6 @@ function mostrarAviso() {
 btnTerminos.addEventListener('click', (e) => { e.stopPropagation(); modalTerminos.style.display = 'flex'; });
 btnCerrarModal.addEventListener('click', () => { modalTerminos.style.display = 'none'; });
 
-// Lógica exacta del botón del ojito: oculta el resto de controles, cambia el icono y mantiene visible el ojo y el botón de grabar
 btnToggleInterfaz.addEventListener('click', (e) => {
     e.stopPropagation();
     interfazOculta = !interfazOculta;
@@ -376,59 +377,68 @@ function aplicarTransformacion() {
     window.addEventListener(evt, () => { arrastrando = false; });
 });
 
+// Control absoluto del botón de grabación (Iniciar pidiendo nombre/cuadro, Detener guardando y volviendo a círculo rojo)
 btnGrabar.addEventListener('click', () => {
-    if (!estaGrabando) { iniciarGrabacion(); } else { detenerGrabacion(); }
-});
+    if (!estaGrabando) { 
+        let nombreSugerido = `EstudioAR_${Date.now()}`;
+        nombreArchivoGrabado = prompt("Escribe el nombre para tu video grabado:", nombreSugerido);
+        
+        if (!nombreArchivoGrabado || nombreArchivoGrabado.trim() === "") {
+            return; // Si cancela el prompt, no inicia la grabación
+        }
 
-function iniciarGrabacion() {
-    let nombreSugerido = `EstudioAR_${Date.now()}`;
-    nombreArchivoGrabado = prompt("Escribe el nombre para tu video grabado:", nombreSugerido);
-    
-    if (!nombreArchivoGrabado || nombreArchivoGrabado.trim() === "") {
-        nombreArchivoGrabado = nombreSugerido;
-    }
+        // Ocultar la interfaz al iniciar para dejar la pantalla limpia
+        if (!interfazOculta) {
+            btnToggleInterfaz.click();
+        }
 
-    fragmentosVideo = [];
-    const streamCanvas = canvas.captureStream(30); 
-    const streamCamara = videoCamara.srcObject;
-    const tracksCombinados = [...streamCamara.getVideoTracks(), ...streamCanvas.getVideoTracks()];
-    if (videoMultimedia.srcObject && videoMultimedia.srcObject.getAudioTracks().length > 0) {
-        tracksCombinados.push(...videoMultimedia.srcObject.getAudioTracks());
-    }
-    const streamFinal = new MediaStream(tracksCombinados);
+        fragmentosVideo = [];
+        const streamCanvas = canvas.captureStream(30); 
+        const streamCamara = videoCamara.srcObject;
+        const tracksCombinados = [...streamCamara.getVideoTracks(), ...streamCanvas.getVideoTracks()];
+        if (videoMultimedia.srcObject && videoMultimedia.srcObject.getAudioTracks().length > 0) {
+            tracksCombinados.push(...videoMultimedia.srcObject.getAudioTracks());
+        }
+        const streamFinal = new MediaStream(tracksCombinados);
 
-    try { mediaRecorder = new MediaRecorder(streamFinal, { mimeType: 'video/webm; codecs=vp9' }); } 
-    catch (e) { mediaRecorder = new MediaRecorder(streamFinal); }
+        try { mediaRecorder = new MediaRecorder(streamFinal, { mimeType: 'video/webm; codecs=vp9' }); } 
+        catch (e) { mediaRecorder = new MediaRecorder(streamFinal); }
 
-    mediaRecorder.ondataavailable = (event) => { if (event.data && event.data.size > 0) fragmentosVideo.push(event.data); };
-    mediaRecorder.onstop = () => {
-        const blob = new Blob(fragmentosVideo, { type: 'video/webm' });
-        const urlBlob = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = urlBlob;
-        a.download = `${nombreArchivoGrabado.replace(/[^a-z0-9_]/gi, '_')}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => { 
-            document.body.removeChild(a); 
-            window.URL.revokeObjectURL(urlBlob); 
-            alert(`¡Video guardado con éxito!`);
-        }, 100);
-    };
+        mediaRecorder.ondataavailable = (event) => { if (event.data && event.data.size > 0) fragmentosVideo.push(event.data); };
+        
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(fragmentosVideo, { type: 'video/webm' });
+            const urlBlob = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = urlBlob;
+            a.download = `${nombreArchivoGrabado.replace(/[^a-z0-9_]/gi, '_')}.webm`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { 
+                document.body.removeChild(a); 
+                window.URL.revokeObjectURL(urlBlob); 
+                alert(`¡Video guardado con éxito!`);
+            }, 100);
 
-    mediaRecorder.start();
-    estaGrabando = true;
-    btnGrabar.classList.add('grabando');
-}
+            // Regresar la interfaz a visible al terminar de guardar
+            if (interfazOculta) {
+                btnToggleInterfaz.click();
+            }
+        };
 
-function detenerGrabacion() {
-    if (mediaRecorder && estaGrabando) { 
-        mediaRecorder.stop(); 
+        mediaRecorder.start();
+        estaGrabando = true;
+        btnGrabar.classList.add('grabando'); // Cambia a cuadrado/stop
+
+    } else { 
+        if (mediaRecorder) { 
+            mediaRecorder.stop(); 
+        }
         estaGrabando = false; 
-        btnGrabar.classList.remove('grabando'); 
+        btnGrabar.classList.remove('grabando'); // Regresa a círculo rojo redondo
     }
-}
+});
 
 btnColor.addEventListener('click', (e) => {
     e.stopPropagation();
