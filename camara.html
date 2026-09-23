@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
 <title>Estudio AR: Versión Comercial Blindada</title>
 <style>
-/* Reset absoluto para cubrir el 100% de la pantalla y ocultar desbordamientos */
 html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100vh; overflow: hidden; font-family: sans-serif; -webkit-touch-callout: none; }
 #contenedor-principal { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; }
 
@@ -21,10 +20,10 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
 #btn-aprobar-dispositivo { background: #28a745; color: white; }
 #btn-rechazar-dispositivo { background: #dc3545; color: white; }
 
-#modal-terminos, #modal-ayuda { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-#contenido-modal, #contenido-ayuda { background: #1c1c1c; color: #fff; padding: 25px; border-radius: 12px; max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.7); font-size: 13px; line-height: 1.5; border: 1px solid #444; }
-#contenido-modal h3, #contenido-ayuda h3 { margin-top: 0; color: #28a745; font-size: 18px; }
-.btn-cerrar-modal { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-top: 15px; cursor: pointer; float: right; font-weight: bold; }
+#modal-terminos { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+#contenido-modal { background: #1c1c1c; color: #fff; padding: 25px; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 5px 20px rgba(0,0,0,0.7); font-size: 13px; line-height: 1.5; border: 1px solid #444; }
+#contenido-modal h3 { margin-top: 0; color: #28a745; font-size: 18px; }
+#btn-cerrar-modal { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-top: 15px; cursor: pointer; float: right; font-weight: bold; }
 
 #panel-controles { position: absolute; top: 20px; left: 20px; z-index: 5000; display: flex; gap: 10px; align-items: center; transition: opacity 0.3s ease; }
 .btn-flotante { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(0, 0, 0, 0.4); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: background-color 0.2s; }
@@ -33,21 +32,13 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
 #btn-menu-circular::after { content: "⚙️"; font-size: 16px; }
 #btn-mover-efecto::after { content: "✋"; font-size: 16px; }
 #btn-mover-efecto.activo { background-color: #28a745; border-color: #fff; }
-#btn-cambiar-camara::after { content: "🔄"; font-size: 16px; }
-
-/* Transición fluida del botón de interfaz (ojo abierto / ojo cerrado con pestañas) */
-#btn-toggle-interfaz { position: relative; width: 36px; height: 36px; border-radius: 50%; background-color: rgba(0, 0, 0, 0.4); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); transition: all 0.3s ease; }
-#btn-toggle-interfaz::after { content: "👁️"; font-size: 16px; transition: transform 0.3s ease, opacity 0.3s ease; display: inline-block; }
-#btn-toggle-interfaz.oculto::after { content: " ˗ˏˋ 👁️ ˎˊ˗ "; transform: scaleY(0.2); opacity: 0.8; font-size: 14px; }
-
-#btn-ayuda::after { content: "❓"; font-size: 16px; }
 #btn-terminos::after { content: "📄"; font-size: 16px; }
+#btn-cambiar-camara::after { content: "🔄"; font-size: 16px; }
+#btn-toggle-interfaz::after { content: "👁️"; font-size: 16px; }
 
-/* Botón de Grabar Inteligente (Círculo / Cuadrado) */
-#btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: all 0.3s; }
+#btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; }
 #btn-grabar::after { content: "🔴"; font-size: 14px; }
-#btn-grabar.grabando { background-color: rgba(255, 0, 0, 0.9); border-radius: 6px; animation: parpadeo 1s infinite; }
-#btn-grabar.grabando::after { content: "⏹️"; font-size: 14px; }
+#btn-grabar.grabando { background-color: rgba(255, 0, 0, 0.9); animation: parpadeo 1s infinite; }
 @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
 #tooltip-texto { position: absolute; left: 48px; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.85); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 13px; white-space: nowrap; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
@@ -60,9 +51,6 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
 .btn-accion-menu { color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; text-align: center; }
 #btn-agregar-archivo { background: #1b4d3e; }
 #btn-borrar-item { background: #6c2222; }
-
-#panel-escala { display: none; position: absolute; top: 70px; left: 20px; background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 8px; z-index: 5000; color: white; font-size: 12px; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-#slider-escala { width: 100px; cursor: pointer; }
 
 #aviso-premium { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(220, 53, 69, 0.95); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 9999; display: none; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.6); line-height: 1.4; }
 
@@ -94,28 +82,13 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
     </div>
 </div>
 
-<div id="modal-ayuda">
-    <div id="contenido-ayuda">
-        <h3>📖 Manual de Ayuda y Funcionalidades</h3>
-        <p>Bienvenido a <strong>Estudio AR</strong>. Aquí tienes una descripción detallada de cada herramienta:</p>
-        <ul>
-            <li><strong>⚙️ Menú de Efectos:</strong> Permite seleccionar el video o GIF transparente que deseas proyectar sobre tu cámara.</li>
-            <li><strong>✋ Mover y Escalar:</strong> Habilita el control táctil para arrastrar el efecto por la pantalla y ajustar su tamaño con el Zoom.</li>
-            <li><strong>🔄 Cambiar Cámara:</strong> Alterna entre cámara frontal, trasera o externas conectadas.</li>
-            <li><strong>👁️ Ocultar/Mostrar Controles:</strong> Oculta temporalmente los botones para capturar la pantalla limpia (el icono del ojo permanece disponible con una transición suave).</li>
-            <li><strong>🔴 Grabar Video:</strong> Solicita un nombre, inicia la grabación ocultando los demás botones y se convierte en cuadro (⏹️). Al detenerla, guarda el video y restaura la interfaz.</li>
-            <li><strong>🎨 Filtro de Croma:</strong> Selecciona el color clave (Verde, Azul o Negro) para volverlo transparente en tiempo real.</li>
-        </ul>
-        <button id="btn-cerrar-ayuda" class="btn-cerrar-modal">Cerrar Ayuda</button>
-    </div>
-</div>
-
 <div id="modal-terminos">
     <div id="contenido-modal">
         <h3>📄 Términos, Condiciones y Privacidad</h3>
-        <p><strong>Privacidad de Datos:</strong> Estudio AR utiliza la cámara de tu dispositivo exclusivamente en tiempo real. Ningún flujo es grabado o transmitido externamente.
+        <p><strong>Privacidad de Datos:</strong> Estudio AR utiliza la cámara de tu dispositivo exclusivamente en tiempo real para superponer los efectos visuales seleccionados. 
+        <br><br><strong>Seguridad:</strong> Ninguna imagen, video ni flujo de cámara es grabado ni transmitido a servidores externos. Todo el procesamiento ocurre localmente.
         <br><br><strong>Suscripción:</strong> Funciones avanzadas por $30 MXN bimestrales gestionados mediante Google Play Billing.</p>
-        <button id="btn-cerrar-terminos" class="btn-cerrar-modal">Entendido</button>
+        <button id="btn-cerrar-modal">Entendido</button>
     </div>
 </div>
 
@@ -123,7 +96,7 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
     <div id="aviso-premium">⚠️ Función bloqueada. Desbloquea movimiento, zoom y croma completo suscribiéndote por solo $30 bimestrales.</div>
 
     <div id="panel-controles">
-        <div id="btn-menu-circular" class="btn-flotante" data-control="item">
+        <div id="btn-menu-circular" class="btn-flotante">
             <span id="tooltip-texto">Menú de Efectos</span>
             <div id="selector-video-wrapper">
                 <select id="selector-video"></select>
@@ -131,17 +104,11 @@ html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height
                 <button id="btn-borrar-item" class="btn-accion-menu">🗑️ Borrar seleccionado</button>
             </div>
         </div>
-        <div id="btn-mover-efecto" class="btn-flotante" title="Mover y Escalar" data-control="item"></div>
-        <div id="btn-cambiar-camara" class="btn-flotante" title="Cambiar Cámara" data-control="item"></div>
+        <div id="btn-mover-efecto" class="btn-flotante" title="Mover y Escalar"></div>
+        <div id="btn-cambiar-camara" class="btn-flotante" title="Cambiar Cámara"></div>
         <div id="btn-toggle-interfaz" class="btn-flotante" title="Ocultar/Mostrar Controles"></div>
-        <div id="btn-ayuda" class="btn-flotante" title="Ayuda y Manual" data-control="item"></div>
-        <div id="btn-terminos" class="btn-flotante" title="Términos y Privacidad" data-control="item"></div>
+        <div id="btn-terminos" class="btn-flotante" title="Términos y Privacidad"></div>
         <div id="btn-grabar" title="Grabar Video"></div>
-    </div>
-
-    <div id="panel-escala">
-        <span>Zoom:</span>
-        <input type="range" id="slider-escala" min="0.3" max="2.5" step="0.05" value="1">
     </div>
 
     <input type="file" id="input-archivo-oculto" accept="video/mp4,image/gif,image/webp">
@@ -214,15 +181,8 @@ const inputArchivoOculto = document.getElementById('input-archivo-oculto');
 const btnMoverEfecto = document.getElementById('btn-mover-efecto');
 const btnTerminos = document.getElementById('btn-terminos');
 const modalTerminos = document.getElementById('modal-terminos');
-const btnCerrarTerminos = document.getElementById('btn-cerrar-terminos');
-
-const btnAyuda = document.getElementById('btn-ayuda');
-const modalAyuda = document.getElementById('modal-ayuda');
-const btnCerrarAyuda = document.getElementById('btn-cerrar-ayuda');
-
+const btnCerrarModal = document.getElementById('btn-cerrar-modal');
 const btnGrabar = document.getElementById('btn-grabar');
-const panelEscala = document.getElementById('panel-escala');
-const sliderEscala = document.getElementById('slider-escala');
 
 const btnColor = document.getElementById('btn-color');
 const menuColores = document.getElementById('menu-colores');
@@ -241,6 +201,8 @@ let posX = 0, posY = 0, escalaActual = 1;
 let arrastrando = false;
 let startX = 0, startY = 0;
 
+let distanciaInicialPellizco = null;
+
 let mediaRecorder;
 let fragmentosVideo = [];
 let estaGrabando = false;
@@ -256,24 +218,14 @@ function mostrarAviso() {
 }
 
 btnTerminos.addEventListener('click', (e) => { e.stopPropagation(); modalTerminos.style.display = 'flex'; });
-btnCerrarTerminos.addEventListener('click', () => { modalTerminos.style.display = 'none'; });
+btnCerrarModal.addEventListener('click', () => { modalTerminos.style.display = 'none'; });
 
-btnAyuda.addEventListener('click', (e) => { e.stopPropagation(); modalAyuda.style.display = 'flex'; });
-btnCerrarAyuda.addEventListener('click', () => { modalAyuda.style.display = 'none'; });
-
-// Lógica del botón del ojito (El botón del ojo NUNCA desaparece y cambia suavemente)
 btnToggleInterfaz.addEventListener('click', (e) => {
     e.stopPropagation();
     controlesVisibles = !controlesVisibles;
-    
-    const elementosControl = panelControles.querySelectorAll('[data-control="item"]');
-    elementosControl.forEach(el => {
-        el.style.display = controlesVisibles ? 'flex' : 'none';
-    });
-
-    btnToggleInterfaz.classList.toggle('oculto', !controlesVisibles);
+    panelControles.style.opacity = controlesVisibles ? '1' : '0';
+    panelControles.style.pointerEvents = controlesVisibles ? 'auto' : 'none';
     btnColor.style.display = controlesVisibles ? 'block' : 'none';
-    panelEscala.style.display = (controlesVisibles && modoMoverActivo) ? 'flex' : 'none';
 });
 
 function actualizarSelect() {
@@ -355,68 +307,99 @@ btnMoverEfecto.addEventListener('click', (e) => {
     }
     modoMoverActivo = !modoMoverActivo;
     btnMoverEfecto.classList.toggle('activo', modoMoverActivo);
-    panelEscala.style.display = modoMoverActivo ? 'flex' : 'none';
-});
-
-sliderEscala.addEventListener('input', (e) => {
-    if (!esSuperUsuario) return;
-    escalaActual = parseFloat(e.target.value);
-    aplicarTransformacion();
 });
 
 function aplicarTransformacion() {
     canvas.style.transform = `translate(${posX}px, ${posY}px) scale(${escalaActual})`;
 }
 
-['mousedown', 'touchstart'].forEach(evt => {
-    canvas.addEventListener(evt, (e) => {
-        if (!modoMoverActivo || !esSuperUsuario) return;
+canvas.addEventListener('touchstart', (e) => {
+    if (!modoMoverActivo || !esSuperUsuario) return;
+    if (e.touches.length === 1) {
         arrastrando = true;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        startX = clientX - posX;
-        startY = clientY - posY;
-        e.preventDefault();
-    });
-});
-
-['mousemove', 'touchmove'].forEach(evt => {
-    window.addEventListener(evt, (e) => {
-        if (!arrastrando || !modoMoverActivo) return;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        posX = clientX - startX;
-        posY = clientY - startY;
-        aplicarTransformacion();
-    });
-});
-
-['mouseup', 'touchend'].forEach(evt => {
-    window.addEventListener(evt, () => { arrastrando = false; });
-});
-
-// Lógica de grabación inteligente con ocultamiento automático de botones
-btnGrabar.addEventListener('click', () => {
-    if (!estaGrabando) { 
-        iniciarGrabacion(); 
-    } else { 
-        detenerGrabacion(); 
+        startX = e.touches[0].clientX - posX;
+        startY = e.touches[0].clientY - posY;
+        distanciaInicialPellizco = null;
+    } else if (e.touches.length === 2) {
+        arrastrando = false;
+        distanciaInicialPellizco = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
     }
+    e.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+    if (!modoMoverActivo || !esSuperUsuario) return;
+    if (e.touches.length === 1 && arrastrando) {
+        posX = e.touches[0].clientX - startX;
+        posY = e.touches[0].clientY - startY;
+        aplicarTransformacion();
+    } else if (e.touches.length === 2 && distanciaInicialPellizco) {
+        let distanciaActual = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        let factor = distanciaActual / distanciaInicialPellizco;
+        let nuevaEscala = escalaActual * factor;
+        if (nuevaEscala >= 0.3 && nuevaEscala <= 3.5) {
+            escalaActual = nuevaEscala;
+            aplicarTransformacion();
+        }
+        distanciaInicialPellizco = distanciaActual;
+    }
+    e.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) distanciaInicialPellizco = null;
+    if (e.touches.length === 0) arrastrando = false;
+});
+
+canvas.addEventListener('mousedown', (e) => {
+    if (!modoMoverActivo || !esSuperUsuario) return;
+    arrastrando = true;
+    startX = e.clientX - posX;
+    startY = e.clientY - posY;
+    e.preventDefault();
+});
+
+window.addEventListener('mousemove', (e) => {
+    if (!arrastrando || !modoMoverActivo || !esSuperUsuario) return;
+    posX = e.clientX - startX;
+    posY = e.clientY - startY;
+    aplicarTransformacion();
+});
+
+window.addEventListener('mouseup', () => { arrastrando = false; });
+
+canvas.addEventListener('wheel', (e) => {
+    if (!modoMoverActivo || !esSuperUsuario) return;
+    e.preventDefault();
+    let factorZoom = e.deltaY < 0 ? 1.1 : 0.9;
+    let nuevaEscala = escalaActual * factorZoom;
+    if (nuevaEscala >= 0.3 && nuevaEscala <= 3.5) {
+        escalaActual = nuevaEscala;
+        aplicarTransformacion();
+    }
+}, { passive: false });
+
+btnGrabar.addEventListener('click', () => {
+    if (!estaGrabando) { iniciarGrabacion(); } else { detenerGrabacion(); }
 });
 
 function iniciarGrabacion() {
     let nombreSugerido = `EstudioAR_${Date.now()}`;
     nombreArchivoGrabado = prompt("Escribe el nombre para tu video grabado:", nombreSugerido);
-    
-    if (nombreArchivoGrabado === null) return; 
-
-    if (nombreArchivoGrabado.trim() === "") {
+    if (!nombreArchivoGrabado || nombreArchivoGrabado.trim() === "") {
         nombreArchivoGrabado = nombreSugerido;
     }
 
     fragmentosVideo = [];
-    const streamCanvas = canvas.captureStream(30); 
     const streamCamara = videoCamara.srcObject;
+    const streamCanvas = canvas.captureStream(30);
+
     const tracksCombinados = [...streamCamara.getVideoTracks(), ...streamCanvas.getVideoTracks()];
     if (videoMultimedia.srcObject && videoMultimedia.srcObject.getAudioTracks().length > 0) {
         tracksCombinados.push(...videoMultimedia.srcObject.getAudioTracks());
@@ -439,19 +422,13 @@ function iniciarGrabacion() {
         setTimeout(() => { 
             document.body.removeChild(a); 
             window.URL.revokeObjectURL(urlBlob); 
-            alert(`¡Video guardado con éxito! Revisa la carpeta de descargas de tu dispositivo.`);
+            alert(`¡Video guardado con éxito!`);
         }, 100);
     };
 
     mediaRecorder.start();
     estaGrabando = true;
     btnGrabar.classList.add('grabando');
-
-    const elementosControl = panelControles.querySelectorAll('[data-control="item"]');
-    elementosControl.forEach(el => { el.style.display = 'none'; });
-    btnToggleInterfaz.style.display = 'none';
-    btnColor.style.display = 'none';
-    panelEscala.style.display = 'none';
 }
 
 function detenerGrabacion() {
@@ -459,14 +436,6 @@ function detenerGrabacion() {
         mediaRecorder.stop(); 
         estaGrabando = false; 
         btnGrabar.classList.remove('grabando'); 
-
-        const elementosControl = panelControles.querySelectorAll('[data-control="item"]');
-        elementosControl.forEach(el => { el.style.display = 'flex'; });
-        btnToggleInterfaz.style.display = 'flex';
-        btnColor.style.display = 'block';
-        if (modoMoverActivo) panelEscala.style.display = 'flex';
-        controlesVisibles = true;
-        btnToggleInterfaz.classList.remove('oculto');
     }
 }
 
@@ -529,6 +498,7 @@ function verificarAccesoSuperusuario() {
             lanzarApp();
         } else {
             modal2fa.style.display = 'flex';
+
             btnAprobarDispositivo.onclick = () => {
                 dispositivosGuardados.push(deviceIdActual);
                 localStorage.setItem(dispositivosAutorizadosKey, JSON.stringify(dispositivosGuardados));
@@ -536,6 +506,7 @@ function verificarAccesoSuperusuario() {
                 esSuperUsuario = true;
                 lanzarApp();
             };
+
             btnRechazarDispositivo.onclick = () => {
                 modal2fa.style.display = 'none';
                 esSuperUsuario = false;
@@ -618,6 +589,7 @@ async function lanzarApp() {
 }
 
 window.addEventListener('resize', () => {
+    selectorVideoWrapper.style.display = 'none';
     if (videoMultimedia.videoWidth) {
         canvas.width = videoMultimedia.videoWidth;
         canvas.height = videoMultimedia.videoHeight;
