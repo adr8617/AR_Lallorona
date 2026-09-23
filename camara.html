@@ -2,18 +2,19 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
 <title>Estudio AR: Versión Comercial Blindada</title>
 <style>
-body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
-#contenedor-principal { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #000; }
-#pantalla-inicio { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.97); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; gap: 15px; }
+/* Reset absoluto para cubrir el 100% de la pantalla y ocultar desbordamientos */
+html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100vh; overflow: hidden; font-family: sans-serif; -webkit-touch-callout: none; }
+#contenedor-principal { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; }
+
+#pantalla-inicio { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.98); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; gap: 15px; }
 #btn-iniciar { background-color: #28a745; color: white; font-weight: bold; font-size: 18px; padding: 12px 25px; border-radius: 12px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; }
 .input-login { padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; width: 260px; text-align: center; }
 #mensaje-error { color: #ff4444; text-align: center; max-width: 80%; font-size: 14px; }
 
-/* Modal de Autenticación de Doble Factor (2FA / Alerta de Dispositivo Nuevo) */
-#modal-2fa { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 20000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+#modal-2fa { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 20000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
 #contenido-2fa { background: #1c1c1c; color: #fff; padding: 25px; border-radius: 12px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.7); border: 1px solid #ff4444; }
 #contenido-2fa h3 { color: #ff4444; margin-top: 0; }
 .btn-2fa { padding: 10px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; margin: 10px 5px; }
@@ -50,7 +51,7 @@ body { margin: 0; background-color: #000; display: flex; justify-content: center
 
 #aviso-premium { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(220, 53, 69, 0.95); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 9999; display: none; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.6); line-height: 1.4; }
 
-#modal-terminos { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+#modal-terminos { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
 #contenido-modal { background: #1c1c1c; color: #fff; padding: 25px; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 5px 20px rgba(0,0,0,0.7); font-size: 13px; line-height: 1.5; border: 1px solid #444; }
 #contenido-modal h3 { margin-top: 0; color: #28a745; font-size: 18px; }
 #btn-cerrar-modal { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-top: 15px; cursor: pointer; float: right; font-weight: bold; }
@@ -59,10 +60,11 @@ body { margin: 0; background-color: #000; display: flex; justify-content: center
 #menu-colores { display: none; position: absolute; top: 55px; right: 20px; background: rgba(0,0,0,0.9); padding: 10px; border-radius: 8px; z-index: 5001; flex-direction: column; gap: 12px; }
 .opcion-color { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
 
-#video-camara { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; background-color: #000; }
+/* Control fluido de cámara y canvas abarcando siempre 100% de la pantalla sin importar rotación */
+#video-camara { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: 1; background-color: #000; }
 #video-multimedia, #imagen-fuente-oculta { display: none; }
-#capa-efecto-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; display: flex; justify-content: center; align-items: center; }
-#canvas-overlay { width: 110%; max-width: none; height: auto; object-fit: cover; pointer-events: auto; touch-action: none; cursor: default; }
+#capa-efecto-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; pointer-events: none; display: flex; justify-content: center; align-items: center; }
+#canvas-overlay { width: 100vw; height: 100vh; max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: auto; touch-action: none; cursor: default; }
 </style>
 </head>
 <body>
@@ -74,7 +76,6 @@ body { margin: 0; background-color: #000; display: flex; justify-content: center
     <p id="mensaje-error"></p>
 </div>
 
-<!-- Modal de Alerta 2FA por Dispositivo Desconocido -->
 <div id="modal-2fa">
     <div id="contenido-2fa">
         <h3>🚨 Alerta de Seguridad</h3>
@@ -138,7 +139,6 @@ body { margin: 0; background-color: #000; display: flex; justify-content: center
 const SUPER_USUARIOS = ["adr8617@gmail.com", "la.burbuj@gmail.com"];
 let esSuperUsuario = false;
 
-// Generador de ID Único de Dispositivo en LocalStorage
 function obtenerDispositivoId() {
     let devId = localStorage.getItem('estudio_ar_device_id');
     if (!devId) {
@@ -411,8 +411,6 @@ function cargarArchivoSeleccionado() {
         btnColor.style.display = 'block';
         imagenFuenteOculta.src = archivoUrl;
         imagenFuenteOculta.onload = () => {
-            canvas.width = imagenFuenteOculta.naturalWidth || 500;
-            canvas.height = imagenFuenteOculta.naturalHeight || 500;
             procesarChromaKeyGIF();
         };
     } else {
@@ -434,12 +432,10 @@ function verificarAccesoSuperusuario() {
         const dispositivosAutorizadosKey = `auth_devs_${emailIngresado}`;
         let dispositivosGuardados = JSON.parse(localStorage.getItem(dispositivosAutorizadosKey) || "[]");
 
-        // Si este teléfono ya está autorizado previamente
         if (dispositivosGuardados.includes(deviceIdActual)) {
             esSuperUsuario = true;
             lanzarApp();
         } else {
-            // Es un dispositivo NUEVO con correo de superusuario: Se dispara la Alerta de Seguridad (2FA)
             modal2fa.style.display = 'flex';
 
             btnAprobarDispositivo.onclick = () => {
@@ -453,7 +449,7 @@ function verificarAccesoSuperusuario() {
             btnRechazarDispositivo.onclick = () => {
                 modal2fa.style.display = 'none';
                 esSuperUsuario = false;
-                lanzarApp(); // Arranca como usuario normal de prueba bloqueado
+                lanzarApp();
             };
         }
     } else {
@@ -466,7 +462,7 @@ async function lanzarApp() {
     mensajeError.innerText = "Solicitando permisos de cámara...";
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+            video: { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1080 } },
             audio: true 
         });
         videoCamara.srcObject = stream;
@@ -474,9 +470,15 @@ async function lanzarApp() {
             videoCamara.play();
             pantallaInicio.style.display = 'none';
             panelControles.style.display = 'flex';
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(() => {});
+            
+            // Forzar pantalla completa absoluta para ocultar barra de estado y navegación en cualquier navegador móvil
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(() => {});
+            } else if (elem.webkitRequestFullscreen) { /* Safari / iOS webkit */
+                elem.webkitRequestFullscreen();
             }
+
             actualizarSelect();
             cargarArchivoSeleccionado();
         };
@@ -484,6 +486,17 @@ async function lanzarApp() {
         mensajeError.innerText = "Error: No se pudo acceder a la cámara o permisos denegados.";
     }
 }
+
+// Reajuste automático dinámico al girar la pantalla (Landscape / Portrait)
+window.addEventListener('resize', () => {
+    if (videoMultimedia.videoWidth) {
+        canvas.width = videoMultimedia.videoWidth;
+        canvas.height = videoMultimedia.videoHeight;
+    } else if (imagenFuenteOculta.naturalWidth) {
+        canvas.width = imagenFuenteOculta.naturalWidth;
+        canvas.height = imagenFuenteOculta.naturalHeight;
+    }
+});
 
 videoMultimedia.addEventListener('loadedmetadata', () => {
     canvas.width = videoMultimedia.videoWidth;
@@ -510,6 +523,8 @@ function procesarChromaKeyVideo() {
 
 function procesarChromaKeyGIF() {
     if (tipoActual === 'gif') {
+        canvas.width = imagenFuenteOculta.naturalWidth || 500;
+        canvas.height = imagenFuenteOculta.naturalHeight || 500;
         ctx.drawImage(imagenFuenteOculta, 0, 0, canvas.width, canvas.height);
         let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
         let totalPixeles = frame.data.length / 4;
