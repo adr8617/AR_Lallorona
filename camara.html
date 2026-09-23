@@ -3,29 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámara con Chroma Key Multi-Video</title>
+    <title>Estudio AR: Chroma y GIFs</title>
     <style>
         body { margin: 0; background-color: #111; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
         #contenedor-principal { position: relative; width: 100vw; height: 100vh; max-width: 1280px; max-height: 720px; }
         
-        /* El panel de controles flotante */
+        /* Controles y Menú */
         #panel-controles { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; background: rgba(0, 0, 0, 0.7); padding: 15px; border-radius: 10px; display: flex; flex-direction: column; gap: 10px; text-align: center; }
         #panel-controles select { padding: 10px; font-size: 16px; border-radius: 5px; border: none; cursor: pointer; }
         
-        /* BOTÓN DE INICIO GIGANTE */
+        /* PANTALLA DE INICIO */
         #pantalla-inicio { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         #btn-iniciar { background-color: #28a745; color: white; font-weight: bold; font-size: 24px; padding: 20px 40px; border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         #mensaje-error { color: #ff4444; margin-top: 20px; text-align: center; max-width: 80%; }
 
-        /* Capas de video */
+        /* Botón selector de color (Solo para MP4) */
+        #btn-color { position: absolute; top: 20px; right: 20px; width: 25px; height: 25px; border-radius: 50%; background-color: #00ff00; cursor: pointer; z-index: 102; opacity: 0.3; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.8); transition: opacity 0.2s; }
+        #menu-colores { display: none; position: absolute; top: 55px; right: 20px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; z-index: 101; flex-direction: column; gap: 15px; }
+        .opcion-color { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; box-shadow: 0 0 3px rgba(255,255,255,0.5); }
+        .opcion-color:hover { border-color: white; }
+
+        /* Capas Visuales */
         #video-camara { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; background-color: #333; }
         #video-verde { display: none; }
-        #canvas-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2; pointer-events: none; }
+        
+        /* Capa 2A: Para los videos con Chroma Key */
+        #canvas-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2; pointer-events: none; display: none; }
+        
+        /* Capa 2B: Para los GIFs transparentes */
+        #imagen-gif { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2; pointer-events: none; display: none; }
     </style>
 </head>
 <body>
     
-    <!-- PANTALLA DE INICIO (Obligatoria para móviles) -->
     <div id="pantalla-inicio">
         <button id="btn-iniciar">TOCA AQUÍ PARA ENCENDER CÁMARA</button>
         <p id="mensaje-error"></p>
@@ -34,19 +44,29 @@
     <div id="contenedor-principal">
         <div id="panel-controles" style="display: none;">
             <select id="selector-video">
-                <option value="llorona.mp4">Efecto: La Llorona</option>
-                <!-- Agrega aquí más opciones cuando subas más videos -->
+                <option value="AR_Lallorona.mp4">Video Chroma: La Llorona</option>
+                <option value="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDlkNHpxcDVpZmZqZXkwb2ZxbGZxcGZxbGZxcGZxbGZxcGZxbGZxcCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/MDJ9IbxxvDUQM/giphy.gif">GIF Transparente: Gatito (Ejemplo)</option>
             </select>
         </div>
+
+        <div id="btn-color"></div>
+        <div id="menu-colores">
+            <div class="opcion-color" data-color="verde" style="background-color: #00ff00;"></div>
+            <div class="opcion-color" data-color="azul" style="background-color: #0000ff;"></div>
+            <div class="opcion-color" data-color="negro" style="background-color: #111; border: 1px solid #777;"></div>
+        </div>
+
         <video id="video-camara" autoplay playsinline muted></video>
         <video id="video-verde" loop muted playsinline crossorigin="anonymous"></video>
         <canvas id="canvas-overlay"></canvas>
+        <img id="imagen-gif" src="" alt="Animación GIF">
     </div>
 
     <script>
         const videoCamara = document.getElementById('video-camara');
         const videoVerde = document.getElementById('video-verde');
         const canvas = document.getElementById('canvas-overlay');
+        const imagenGif = document.getElementById('imagen-gif');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         
         const btnIniciar = document.getElementById('btn-iniciar');
@@ -55,50 +75,86 @@
         const selectorVideo = document.getElementById('selector-video');
         const mensajeError = document.getElementById('mensaje-error');
         
+        const btnColor = document.getElementById('btn-color');
+        const menuColores = document.getElementById('menu-colores');
+        const opcionesColor = document.querySelectorAll('.opcion-color');
+        
+        let colorFiltro = 'verde';
         let procesando = false;
+        let esVideo = true;
 
+        // UI de Selector de Colores
+        btnColor.addEventListener('click', () => {
+            const estaAbierto = menuColores.style.display === 'flex';
+            menuColores.style.display = estaAbierto ? 'none' : 'flex';
+            btnColor.style.opacity = estaAbierto ? '0.3' : '1';
+        });
+
+        opcionesColor.forEach(opcion => {
+            opcion.addEventListener('click', (e) => {
+                colorFiltro = e.target.getAttribute('data-color');
+                btnColor.style.backgroundColor = getComputedStyle(e.target).backgroundColor;
+                menuColores.style.display = 'none';
+                btnColor.style.opacity = '0.3';
+            });
+        });
+
+        // Motor de carga inteligente (GIF vs MP4)
+        function cargarArchivo(archivo) {
+            const extension = archivo.split('.').pop().toLowerCase();
+            // Si el archivo termina en .gif o es un enlace de giphy
+            if (extension === 'gif' || archivo.includes('giphy.com')) {
+                esVideo = false;
+                videoVerde.pause(); // Detenemos el video
+                canvas.style.display = 'none'; // Ocultamos el motor chroma
+                btnColor.style.display = 'none'; // Ocultamos botón de color (no se usa en GIF)
+                
+                imagenGif.src = archivo;
+                imagenGif.style.display = 'block'; // Mostramos el GIF
+            } else {
+                esVideo = true;
+                imagenGif.style.display = 'none'; // Ocultamos el GIF
+                btnColor.style.display = 'block'; // Mostramos botón de color
+                canvas.style.display = 'block'; // Mostramos el motor chroma
+                
+                videoVerde.src = archivo;
+                videoVerde.play();
+            }
+        }
+
+        // Encender la cámara
         async function iniciar() {
             mensajeError.innerText = "Solicitando permisos...";
             try {
-                // Forzamos la petición de video
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user" } // Pide cámara frontal
+                    video: { facingMode: "user" } 
                 });
                 
                 videoCamara.srcObject = stream;
-                
-                // Esperamos a que la cámara arranque
                 videoCamara.onloadedmetadata = () => {
                     videoCamara.play();
-                    
-                    // Ocultamos inicio, mostramos controles
                     pantallaInicio.style.display = 'none';
                     panelControles.style.display = 'flex';
                     
-                    // Cargamos Llorona
-                    videoVerde.src = selectorVideo.value;
-                    videoVerde.play();
+                    // Cargar el primer archivo de la lista
+                    cargarArchivo(selectorVideo.value);
                 };
-
             } catch (err) {
                 console.error(err);
                 if (err.name === 'NotAllowedError') {
-                    mensajeError.innerText = "Error: Denegaste el permiso de la cámara. Ve a la configuración de Chrome y permítelo.";
-                } else if (err.name === 'NotFoundError') {
-                    mensajeError.innerText = "Error: No se detectó ninguna cámara en tu celular.";
-                } else if (err.location && err.protocol !== "https:") {
-                    mensajeError.innerText = "Error de seguridad: La página no está cargando con HTTPS.";
+                    mensajeError.innerText = "Error: Denegaste el permiso de la cámara.";
                 } else {
                     mensajeError.innerText = "Error inesperado: " + err.message;
                 }
             }
         }
 
+        // Cambiar archivo en el menú
         selectorVideo.addEventListener('change', (evento) => {
-            videoVerde.src = evento.target.value; 
-            videoVerde.play(); 
+            cargarArchivo(evento.target.value);
         });
 
+        // Configurar tamaño del motor Chroma
         videoVerde.addEventListener('loadedmetadata', () => {
             canvas.width = videoVerde.videoWidth;
             canvas.height = videoVerde.videoHeight;
@@ -108,8 +164,9 @@
             }
         });
 
+        // Motor Chroma Key
         function procesarChromaKey() {
-            if (!videoVerde.paused && !videoVerde.ended) {
+            if (esVideo && !videoVerde.paused && !videoVerde.ended) {
                 ctx.drawImage(videoVerde, 0, 0, canvas.width, canvas.height);
                 let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 let totalPixeles = frame.data.length / 4;
@@ -119,8 +176,12 @@
                     let g = frame.data[i * 4 + 1];
                     let b = frame.data[i * 4 + 2];
 
-                    if (g > 90 && r < 110 && b < 110) {
-                        frame.data[i * 4 + 3] = 0; 
+                    if (colorFiltro === 'verde') {
+                        if (g > 90 && r < 110 && b < 110) frame.data[i * 4 + 3] = 0;
+                    } else if (colorFiltro === 'azul') {
+                        if (b > 90 && r < 110 && g < 110) frame.data[i * 4 + 3] = 0;
+                    } else if (colorFiltro === 'negro') {
+                        if (r < 50 && g < 50 && b < 50) frame.data[i * 4 + 3] = 0;
                     }
                 }
                 ctx.putImageData(frame, 0, 0);
