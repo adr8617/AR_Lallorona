@@ -19,6 +19,12 @@ body { margin: 0; background-color: #000; display: flex; justify-content: center
 #btn-mover-efecto::after { content: "✋"; font-size: 16px; }
 #btn-mover-efecto.activo { background-color: #28a745; border-color: #fff; }
 
+/* Botón de Grabación (Círculo rojo dinámico) */
+#btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: background-color 0.2s; }
+#btn-grabar::after { content: "🔴"; font-size: 14px; }
+#btn-grabar.grabando { background-color: rgba(255, 0, 0, 0.9); animation: parpadeo 1s infinite; }
+@keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
 #tooltip-texto { position: absolute; left: 48px; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.85); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 13px; white-space: nowrap; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 #btn-menu-circular:hover #tooltip-texto, #btn-menu-circular.activo-tactil #tooltip-texto { opacity: 1; visibility: visible; }
 
@@ -64,6 +70,8 @@ body { margin: 0; background-color: #000; display: flex; justify-content: center
             </div>
         </div>
         <div id="btn-mover-efecto" class="btn-flotante" title="Mover y Escalar Efecto"></div>
+        <!-- Botón de Grabación -->
+        <div id="btn-grabar" title="Grabar Video"></div>
     </div>
 
     <div id="panel-escala">
@@ -122,6 +130,7 @@ const btnAgregarArchivo = document.getElementById('btn-agregar-archivo');
 const btnBorrarItem = document.getElementById('btn-borrar-item');
 const inputArchivoOculto = document.getElementById('input-archivo-oculto');
 const btnMoverEfecto = document.getElementById('btn-mover-efecto');
+const btnGrabar = document.getElementById('btn-grabar');
 const panelEscala = document.getElementById('panel-escala');
 const sliderEscala = document.getElementById('slider-escala');
 
@@ -138,6 +147,11 @@ let modoMoverActivo = false;
 let posX = 0, posY = 0, escalaActual = 1;
 let arrastrando = false;
 let startX = 0, startY = 0;
+
+// Variables para la grabación de video
+let mediaRecorder;
+let fragmentosVideo = [];
+let estaGrabando = false;
 
 function actualizarSelect() {
     selectorVideo.innerHTML = "";
@@ -244,6 +258,73 @@ function aplicarTransformacion() {
     window.addEventListener(evt, () => { arrastrando = false; });
 });
 
+// Lógica de Grabación de Pantalla (Cámara + Efecto combinado)
+btnGrabar.addEventListener('click', () => {
+    if (!estaGrabando) {
+        iniciarGrabacion();
+    } else {
+        detenerGrabacion();
+    }
+});
+
+function iniciarGrabacion() {
+    fragmentosVideo = [];
+    // Captura el flujo combinado de la pantalla principal (canvas y cámara)
+    const streamCanvas = canvas.captureStream(30); 
+    const streamCamara = videoCamara.srcObject;
+    
+    // Unimos los tracks de video y audio si están disponibles
+    const tracksCombinados = [...streamCamara.getVideoTracks(), ...streamCanvas.getVideoTracks()];
+    if (videoMultimedia.srcObject && videoMultimedia.srcObject.getAudioTracks().length > 0) {
+        tracksCombinados.push(...videoMultimedia.srcObject.getAudioTracks());
+    }
+
+    const streamFinal = new MediaStream(tracksCombinados);
+
+    try {
+        mediaRecorder = new MediaRecorder(streamFinal, { mimeType: 'video/webm; codecs=vp9' });
+    } catch (e) {
+        try {
+            mediaRecorder = new MediaRecorder(streamFinal, { mimeType: 'video/mp4' });
+        } catch (err) {
+            mediaRecorder = new MediaRecorder(streamFinal);
+        }
+    }
+
+    mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+            fragmentosVideo.push(event.data);
+        }
+    };
+
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(fragmentosVideo, { type: 'video/webm' });
+        const urlBlob = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = urlBlob;
+        a.download = `EstudioAR_${Date.now()}.webm`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(urlBlob);
+        }, 100);
+    };
+
+    mediaRecorder.start();
+    estaGrabando = true;
+    btnGrabar.classList.add('grabando');
+}
+
+function detenerGrabacion() {
+    if (mediaRecorder && estaGrabando) {
+        mediaRecorder.stop();
+        estaGrabando = false;
+        btnGrabar.classList.remove('grabando');
+    }
+}
+
 btnColor.addEventListener('click', (e) => {
     e.stopPropagation();
     const estaAbierto = menuColores.style.display === 'flex';
@@ -272,7 +353,7 @@ function cargarArchivoSeleccionado() {
 
     if (tipoActual === 'gif') {
         videoMultimedia.pause();
-        btnColor.style.display = 'block'; // ¡AHORA EL BOTÓN DE COLOR ESTÁ ACTIVO PARA GIFs TAMBIÉN!
+        btnColor.style.display = 'block';
         
         imagenFuenteOculta.src = archivoUrl;
         imagenFuenteOculta.onload = () => {
@@ -297,7 +378,7 @@ async function iniciarExperiencia() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
-            audio: false 
+            audio: true 
         });
         videoCamara.srcObject = stream;
         videoCamara.onloadedmetadata = () => {
@@ -325,7 +406,6 @@ videoMultimedia.addEventListener('loadedmetadata', () => {
     }
 });
 
-// Motor de Chroma Key para Videos MP4
 function procesarChromaKeyVideo() {
     if (tipoActual === 'video' && !videoMultimedia.paused && !videoMultimedia.ended) {
         ctx.drawImage(videoMultimedia, 0, 0, canvas.width, canvas.height);
@@ -350,7 +430,6 @@ function procesarChromaKeyVideo() {
     requestAnimationFrame(procesarChromaKeyVideo);
 }
 
-// Motor de Chroma Key aplicado también a GIFs (para eliminarles el fondo negro o verde si lo traen pegado)
 function procesarChromaKeyGIF() {
     if (tipoActual === 'gif') {
         ctx.drawImage(imagenFuenteOculta, 0, 0, canvas.width, canvas.height);
@@ -363,10 +442,10 @@ function procesarChromaKeyGIF() {
             let b = frame.data[i * 4 + 2];
 
             if (colorFiltro === 'verde') {
-                if (g > 90 && r < 110 && b < 110) frame.data[i * 4 + 3] = 0;
+                if (g > 90 && r < 110 && g < 110) frame.data[i * 4 + 3] = 0;
             } else if (colorFiltro === 'azul') {
                 if (b > 90 && r < 110 && g < 110) frame.data[i * 4 + 3] = 0;
-            } else if (colorFiltro === 'negro') {
+            } else if (colorFictio === 'negro' || colorFiltro === 'negro') {
                 if (r < 50 && g < 50 && b < 50) frame.data[i * 4 + 3] = 0;
             }
         }
