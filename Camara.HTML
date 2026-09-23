@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cámara con Chroma Key Multi-Video</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        #contenedor-principal {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 1280px;
+            max-height: 720px;
+        }
+
+        /* El panel de controles flotante */
+        #panel-controles {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100; /* Siempre por encima de todo */
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+
+        #panel-controles select, #panel-controles button {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #btn-iniciar {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Capas de video */
+        #video-camara {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        #video-verde {
+            display: none; 
+        }
+
+        #canvas-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; 
+            z-index: 2;
+            pointer-events: none; /* Deja hacer clic a la pantalla a través del efecto */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="contenedor-principal">
+        
+        <!-- Menú de controles flotante -->
+        <div id="panel-controles">
+            <button id="btn-iniciar">1. Encender Cámara</button>
+            
+            <!-- Aquí agregas el nombre de todos los videos que subas a tu GitHub -->
+            <select id="selector-video" style="display: none;">
+                <option value="llorona.mp4">Efecto: La Llorona</option>
+                <option value="fantasma.mp4">Efecto: Fantasma</option>
+                <option value="zombie.mp4">Efecto: Zombie</option>
+                <option value="fuego.mp4">Efecto: Fuego</option>
+            </select>
+        </div>
+
+        <!-- Video de la cámara -->
+        <video id="video-camara" autoplay playsinline></video>
+        
+        <!-- Video verde oculto (No le ponemos enlace inicial, se llena desde el menú) -->
+        <video id="video-verde" loop muted playsinline crossorigin="anonymous"></video>
+        
+        <!-- Canvas para transparencia -->
+        <canvas id="canvas-overlay"></canvas>
+    </div>
+
+    <script>
+        const videoCamara = document.getElementById('video-camara');
+        const videoVerde = document.getElementById('video-verde');
+        const canvas = document.getElementById('canvas-overlay');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        
+        const btnIniciar = document.getElementById('btn-iniciar');
+        const selectorVideo = document.getElementById('selector-video');
+        
+        let procesando = false;
+
+        // 1. Función para encender la cámara
+        async function iniciar() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoCamara.srcObject = stream;
+                
+                // Ocultar botón y mostrar menú de videos
+                btnIniciar.style.display = 'none';
+                selectorVideo.style.display = 'block';
+
+                // Cargar el primer video del menú automáticamente
+                videoVerde.src = selectorVideo.value;
+                videoVerde.play();
+
+            } catch (err) {
+                alert("Error al acceder a la cámara. Revisa los permisos.");
+            }
+        }
+
+        // 2. Función para cambiar el video cuando el usuario elige otro en el menú
+        selectorVideo.addEventListener('change', (evento) => {
+            videoVerde.src = evento.target.value; // Toma el nombre del archivo seleccionado
+            videoVerde.play(); // Y lo reproduce
+        });
+
+        // 3. Preparar el efecto visual cuando carga el video
+        videoVerde.addEventListener('loadedmetadata', () => {
+            canvas.width = videoVerde.videoWidth;
+            canvas.height = videoVerde.videoHeight;
+            if (!procesando) {
+                procesando = true;
+                procesarChromaKey();
+            }
+        });
+
+        // 4. Lógica para borrar el color verde
+        function procesarChromaKey() {
+            if (!videoVerde.paused && !videoVerde.ended) {
+                ctx.drawImage(videoVerde, 0, 0, canvas.width, canvas.height);
+                let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let totalPixeles = frame.data.length / 4;
+
+                for (let i = 0; i < totalPixeles; i++) {
+                    let r = frame.data[i * 4 + 0];
+                    let g = frame.data[i * 4 + 1];
+                    let b = frame.data[i * 4 + 2];
+
+                    if (g > 90 && r < 110 && b < 110) {
+                        frame.data[i * 4 + 3] = 0; // Hacer transparente
+                    }
+                }
+                ctx.putImageData(frame, 0, 0);
+            }
+            requestAnimationFrame(procesarChromaKey);
+        }
+
+        btnIniciar.addEventListener('click', iniciar);
+    </script>
+
+</body>
+</html>
+
