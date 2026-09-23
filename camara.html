@@ -5,260 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estudio AR: Efectos Dinámicos</title>
     <style>
-        /* ==========================================================================
-           1. ESTILOS GENERALES Y RESETEO
-           ========================================================================== */
-        body { 
-            margin: 0; 
-            background-color: #000; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            overflow: hidden; 
-            font-family: sans-serif; 
-        }
+        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
+        #contenedor-principal { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #000; }
+        #pantalla-inicio { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        #btn-iniciar { background-color: #28a745; color: white; font-weight: bold; font-size: 20px; padding: 15px 30px; border-radius: 12px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; }
+        #mensaje-error { color: #ff4444; margin-top: 20px; text-align: center; max-width: 80%; font-size: 14px; }
+
+        /* Controles Superiores Izquierdos */
+        #panel-controles { position: absolute; top: 20px; left: 20px; z-index: 5000; display: flex; gap: 10px; align-items: center; }
         
-        #contenedor-principal { 
-            position: relative; 
-            width: 100vw; 
-            height: 100vh; 
-            overflow: hidden;
-            background: #000;
-        }
-        
-        /* ==========================================================================
-           2. PANTALLA DE INICIO (Desbloqueo de políticas de audio/video)
-           ========================================================================== */
-        #pantalla-inicio { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background-color: rgba(0,0,0,0.95); 
-            z-index: 999; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        #btn-iniciar { 
-            background-color: #28a745; 
-            color: white; 
-            font-weight: bold; 
-            font-size: 20px; 
-            padding: 15px 30px; 
-            border-radius: 12px; 
-            border: none; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
-            cursor: pointer;
-        }
-        #mensaje-error { 
-            color: #ff4444; 
-            margin-top: 20px; 
-            text-align: center; 
-            max-width: 80%; 
-            font-size: 14px;
-        }
+        .btn-flotante { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(0, 0, 0, 0.4); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: background-color 0.2s; }
+        .btn-flotante:active { background-color: rgba(0, 0, 0, 0.7); }
 
-        /* ==========================================================================
-           3. PANEL DE CONTROLES Y BOTÓN CIRCULAR LATERAL IZQUIERDO
-           ========================================================================== */
-        #panel-controles { 
-            position: absolute; 
-            top: 20px; 
-            left: 20px; 
-            z-index: 100; 
-            display: flex; 
-            align-items: center;
-        }
+        #btn-menu-circular::after { content: "⚙️"; font-size: 16px; }
+        #btn-mover-efecto::after { content: "✋"; font-size: 16px; }
+        #btn-mover-efecto.activo { background-color: #28a745; border-color: #fff; }
 
-        /* Botón circular discreto, transparente con borde negro */
-        #btn-menu-circular {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background-color: rgba(0, 0, 0, 0.3);
-            border: 2px solid #000000;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-            position: relative;
-            transition: background-color 0.2s;
-        }
-        #btn-menu-circular:active {
-            background-color: rgba(0, 0, 0, 0.6);
-        }
+        #tooltip-texto { position: absolute; left: 48px; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.85); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 13px; white-space: nowrap; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        #btn-menu-circular:hover #tooltip-texto, #btn-menu-circular.activo-tactil #tooltip-texto { opacity: 1; visibility: visible; }
 
-        /* Icono interno del botón */
-        #btn-menu-circular::after {
-            content: "⚙️";
-            font-size: 16px;
-        }
-
-        /* Tooltip / Pop-up emergente */
-        #tooltip-texto {
-            position: absolute;
-            left: 48px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.85);
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s, visibility 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-
-        #btn-menu-circular:hover #tooltip-texto,
-        #btn-menu-circular.activo-tactil #tooltip-texto {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Desplegable de selección oculto hasta presionar el botón */
-        #selector-video-wrapper {
-            display: none;
-            position: absolute;
-            left: 48px;
-            top: 0;
-            background: rgba(0, 0, 0, 0.85);
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-            flex-direction: column;
-            gap: 8px;
-            min-width: 200px;
-        }
-        #selector-video { 
-            padding: 8px; 
-            font-size: 14px; 
-            border-radius: 6px; 
-            border: 1px solid #444; 
-            background: #222;
-            color: #fff;
-            cursor: pointer; 
-        }
-        
+        #selector-video-wrapper { display: none; position: absolute; left: 48px; top: 0; background: rgba(0, 0, 0, 0.9); padding: 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); flex-direction: column; gap: 8px; min-width: 200px; z-index: 5001; }
+        #selector-video { padding: 8px; font-size: 14px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; cursor: pointer; }
         #input-archivo-oculto { display: none; }
 
-        .btn-accion-menu {
-            color: white;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
-            text-align: center;
-        }
+        .btn-accion-menu { color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; text-align: center; }
         #btn-agregar-archivo { background: #1b4d3e; }
         #btn-agregar-archivo:hover { background: #28a745; }
-
         #btn-borrar-item { background: #6c2222; }
         #btn-borrar-item:hover { background: #a72828; }
 
-        /* ==========================================================================
-           4. SELECTOR DE COLOR CHROMA KEY (Derecha superior)
-           ========================================================================== */
-        #btn-color { 
-            position: absolute; 
-            top: 20px; 
-            right: 20px; 
-            width: 25px; 
-            height: 25px; 
-            border-radius: 50%; 
-            background-color: #00ff00; 
-            cursor: pointer; 
-            z-index: 102; 
-            opacity: 0.3; 
-            border: 2px solid white; 
-            box-shadow: 0 0 5px rgba(0,0,0,0.8); 
-            transition: opacity 0.2s; 
-            display: block; /* Siempre disponible para videos */
-        }
-        #menu-colores { 
-            display: none; 
-            position: absolute; 
-            top: 55px; 
-            right: 20px; 
-            background: rgba(0,0,0,0.8); 
-            padding: 10px; 
-            border-radius: 8px; 
-            z-index: 101; 
-            flex-direction: column; 
-            gap: 12px; 
-        }
-        .opcion-color { 
-            width: 25px; 
-            height: 25px; 
-            border-radius: 50%; 
-            cursor: pointer; 
-            border: 2px solid transparent; 
-        }
+        /* Panel de Control de Zoom/Escala flotante al mover */
+        #panel-escala { display: none; position: absolute; top: 70px; left: 20px; background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 8px; z-index: 5000; color: white; font-size: 12px; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+        #slider-escala { width: 100px; cursor: pointer; }
 
-        /* ==========================================================================
-           5. CAPAS MULTIMEDIA (Cámara, Video Chroma, GIFs)
-           ========================================================================== */
-        #video-camara { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-            z-index: 1; 
-            background-color: #000; 
-        }
+        /* Selector de Color Chroma Key (Derecha superior) */
+        #btn-color { position: absolute; top: 20px; right: 20px; width: 25px; height: 25px; border-radius: 50%; background-color: #00ff00; cursor: pointer; z-index: 5000; opacity: 0.4; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.8); transition: opacity 0.2s; display: block; }
+        #menu-colores { display: none; position: absolute; top: 55px; right: 20px; background: rgba(0,0,0,0.9); padding: 10px; border-radius: 8px; z-index: 5001; flex-direction: column; gap: 12px; }
+        .opcion-color { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+
+        /* Capas Multimedia (Cámara al fondo, Efectos al frente con soporte de transformación táctil/mouse) */
+        #video-camara { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; background-color: #000; }
         #video-multimedia { display: none; }
         
-        #canvas-overlay { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain; 
-            z-index: 2; 
-            pointer-events: none; 
-            display: block; 
-        }
+        #capa-efecto-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; display: flex; justify-content: center; align-items: center; }
         
-        #imagen-gif { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain; 
-            z-index: 2; 
-            pointer-events: none; 
-            display: none; 
-        }
+        #canvas-overlay, #imagen-gif { width: 80%; max-width: 600px; height: auto; object-fit: contain; pointer-events: auto; touch-action: none; cursor: grab; }
+        #canvas-overlay:active, #imagen-gif:active { cursor: grabbing; }
     </style>
 </head>
 <body>
-    
-    <!-- Pantalla inicial de desbloqueo multimedia -->
     <div id="pantalla-inicio">
         <button id="btn-iniciar">TOCA AQUÍ PARA INICIAR</button>
         <p id="mensaje-error"></p>
     </div>
 
     <div id="contenedor-principal">
-        
-        <!-- Panel de control flotante izquierdo -->
-        <div id="panel-controles" style="display: none;">
-            <div id="btn-menu-circular">
+        <div id="panel-controles">
+            <div id="btn-menu-circular" class="btn-flotante">
                 <span id="tooltip-texto">Menú de Efectos</span>
                 <div id="selector-video-wrapper">
                     <select id="selector-video"></select>
@@ -266,12 +69,17 @@
                     <button id="btn-borrar-item" class="btn-accion-menu">🗑️ Borrar seleccionado</button>
                 </div>
             </div>
+            <!-- Botón para desbloquear movimiento libre y zoom -->
+            <div id="btn-mover-efecto" class="btn-flotante" title="Mover y Escalar Efecto"></div>
         </div>
 
-        <!-- Input de archivo invisible -->
+        <div id="panel-escala">
+            <span>Zoom:</span>
+            <input type="range" id="slider-escala" min="0.3" max="2.5" step="0.05" value="1">
+        </div>
+
         <input type="file" id="input-archivo-oculto" accept="video/mp4,image/gif">
 
-        <!-- Selector de color Chroma Key (Siempre visible para videos) -->
         <div id="btn-color"></div>
         <div id="menu-colores">
             <div class="opcion-color" data-color="verde" style="background-color: #00ff00;"></div>
@@ -279,49 +87,35 @@
             <div class="opcion-color" data-color="negro" style="background-color: #111; border: 1px solid #777;"></div>
         </div>
 
-        <!-- Elementos visuales -->
         <video id="video-camara" autoplay playsinline muted></video>
         <video id="video-multimedia" loop playsinline crossorigin="anonymous"></video>
-        <canvas id="canvas-overlay"></canvas>
-        <img id="imagen-gif" src="" alt="GIF transparente">
+        
+        <div id="capa-efecto-container">
+            <canvas id="canvas-overlay"></canvas>
+            <img id="imagen-gif" src="" alt="GIF transparente" style="display: none;">
+        </div>
     </div>
 
     <script>
-        /* ==========================================================================
-           6. GESTIÓN DE MEMORIA LOCAL (Local Database con borrado)
-           ========================================================================== */
-        const MULTIMEDIA_DEFAULT = [
-            {
-                nombre: "Video Chroma: La Llorona",
-                archivo: "llorona.mp4",
-                tipo: "video"
-            }
-        ];
+        const MULTIMEDIA_DEFAULT = [{ nombre: "Video Chroma: La Llorona", archivo: "llorona.mp4", tipo: "video" }];
 
         function obtenerBaseDatos() {
             const guardado = localStorage.getItem('efectos_ar_db');
             if (guardado) {
-                try { 
-                    const parsed = JSON.parse(guardado);
-                    return parsed.length > 0 ? parsed : MULTIMEDIA_DEFAULT;
-                } catch(e) { return MULTIMEDIA_DEFAULT; }
+                try { const parsed = JSON.parse(guardado); return parsed.length > 0 ? parsed : MULTIMEDIA_DEFAULT; } 
+                catch(e) { return MULTIMEDIA_DEFAULT; }
             }
             return MULTIMEDIA_DEFAULT;
         }
 
-        function guardarBaseDatos(db) {
-            localStorage.setItem('efectos_ar_db', JSON.stringify(db));
-        }
-
+        function guardarBaseDatos(db) { localStorage.setItem('efectos_ar_db', JSON.stringify(db)); }
         let listaMultimedia = obtenerBaseDatos();
 
-        /* ==========================================================================
-           7. LÓGICA DE INTERFAZ Y REPRODUCCIÓN
-           ========================================================================== */
         const videoCamara = document.getElementById('video-camara');
         const videoMultimedia = document.getElementById('video-multimedia');
         const canvas = document.getElementById('canvas-overlay');
         const imagenGif = document.getElementById('imagen-gif');
+        const capaContenedor = document.getElementById('capa-efecto-container');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         
         const btnIniciar = document.getElementById('btn-iniciar');
@@ -335,6 +129,9 @@
         const btnAgregarArchivo = document.getElementById('btn-agregar-archivo');
         const btnBorrarItem = document.getElementById('btn-borrar-item');
         const inputArchivoOculto = document.getElementById('input-archivo-oculto');
+        const btnMoverEfecto = document.getElementById('btn-mover-efecto');
+        const panelEscala = document.getElementById('panel-escala');
+        const sliderEscala = document.getElementById('slider-escala');
         
         const btnColor = document.getElementById('btn-color');
         const menuColores = document.getElementById('menu-colores');
@@ -344,9 +141,15 @@
         let procesando = false;
         let tipoActual = 'video';
 
+        // Variables para soporte de arrastre y zoom libre
+        let modoMoverActivo = false;
+        let posX = 0, posY = 0, escalaActual = 1;
+        let arrastrando = false;
+        let startX = 0, startY = 0;
+
         function actualizarSelect() {
             selectorVideo.innerHTML = "";
-            listaMultimedia.forEach((item, index) => {
+            listaMultimedia.forEach((item) => {
                 let option = document.createElement('option');
                 option.value = item.archivo;
                 option.setAttribute('data-tipo', item.tipo);
@@ -366,30 +169,19 @@
             selectorVideoWrapper.style.display = 'none';
             btnMenuCircular.classList.remove('activo-tactil');
             menuColores.style.display = 'none';
-            btnColor.style.opacity = '0.3';
+            btnColor.style.opacity = '0.4';
         });
 
         selectorVideoWrapper.addEventListener('click', (e) => e.stopPropagation());
 
-        // Botón para disparar la carga de archivos locales
-        btnAgregarArchivo.addEventListener('click', (e) => {
-            e.stopPropagation();
-            inputArchivoOculto.click();
-        });
+        btnAgregarArchivo.addEventListener('click', (e) => { e.stopPropagation(); inputArchivoOculto.click(); });
 
-        // Botón para borrar el elemento actualmente seleccionado en el menú
         btnBorrarItem.addEventListener('click', (e) => {
             e.stopPropagation();
             const indexSeleccionado = selectorVideo.selectedIndex;
-            
-            if (listaMultimedia.length <= 1) {
-                alert("No puedes borrar el último elemento predeterminado.");
-                return;
-            }
-
+            if (listaMultimedia.length <= 1) { alert("No puedes borrar el último elemento predeterminado."); return; }
             if (indexSeleccionado >= 0) {
-                const nombreBorrado = listaMultimedia[indexSeleccionado].nombre;
-                if (confirm(`¿Deseas eliminar "${nombreBorrado}" de tu lista guardada?`)) {
+                if (confirm(`¿Deseas eliminar este efecto?`)) {
                     listaMultimedia.splice(indexSeleccionado, 1);
                     guardarBaseDatos(listaMultimedia);
                     actualizarSelect();
@@ -403,38 +195,74 @@
         inputArchivoOculto.addEventListener('change', (e) => {
             const archivo = e.target.files[0];
             if (!archivo) return;
-
             const nombreArchivo = archivo.name;
-            const esGif = nombreArchivo.toLowerCase().endsWith('.gif');
-            const tipoDetectado = esGif ? 'gif' : 'video';
-
+            const tipoDetectado = nombreArchivo.toLowerCase().endsWith('.gif') ? 'gif' : 'video';
             let descripcionCustom = prompt("Escribe el nombre descriptivo para este efecto:", nombreArchivo);
-            if (!descripcionCustom || descripcionCustom.trim() === "") {
-                descripcionCustom = nombreArchivo;
-            }
+            if (!descripcionCustom || descripcionCustom.trim() === "") descripcionCustom = nombreArchivo;
 
             const urlLocal = URL.createObjectURL(archivo);
-            const nuevoEfecto = {
-                nombre: descripcionCustom,
-                archivo: urlLocal,
-                tipo: tipoDetectado
-            };
-
-            listaMultimedia.push(nuevoEfecto);
+            listaMultimedia.push({ nombre: descripcionCustom, archivo: urlLocal, tipo: tipoDetectado });
             guardarBaseDatos(listaMultimedia);
             actualizarSelect();
-
             selectorVideo.selectedIndex = selectorVideo.options.length - 1;
             cargarArchivoSeleccionado();
             selectorVideoWrapper.style.display = 'none';
         });
 
-        // Control del menú de colores Chroma Key
+        // Activar/Desactivar modo libre de arrastre y zoom
+        btnMoverEfecto.addEventListener('click', (e) => {
+            e.stopPropagation();
+            modoMoverActivo = !modoMoverActivo;
+            btnMoverEfecto.classList.toggle('activo', modoMoverActivo);
+            panelEscala.style.display = modoMoverActivo ? 'flex' : 'none';
+        });
+
+        sliderEscala.addEventListener('input', (e) => {
+            escalaActual = parseFloat(e.target.value);
+            aplicarTransformacion();
+        });
+
+        function aplicarTransformacion() {
+            const elementoActivo = tipoActual === 'gif' ? imagenGif : canvas;
+            elementoActivo.style.transform = `translate(${posX}px, ${posY}px) scale(${escalaActual})`;
+        }
+
+        // Eventos táctiles y de mouse para arrastrar libremente el efecto por la pantalla
+        const elementoInteractivo = () => tipoActual === 'gif' ? imagenGif : canvas;
+
+        ['mousedown', 'touchstart'].forEach(evt => {
+            elementoInteractivo().addEventListener(evt, (e) => {
+                if (!modoMoverActivo) return;
+                arrastrando = true;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                startX = clientX - posX;
+                startY = clientY - posY;
+                e.preventDefault();
+            });
+        });
+
+        ['mousemove', 'touchmove'].forEach(evt => {
+            window.addEventListener(evt, (e) => {
+                if (!arrastrando || !modoMoverActivo) return;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                posX = clientX - startX;
+                posY = clientY - startY;
+                aplicarTransformacion();
+            });
+        });
+
+        ['mouseup', 'touchend'].forEach(evt => {
+            window.addEventListener(evt, () => { arrastrando = false; });
+        });
+
+        // Menú Chroma Key de colores
         btnColor.addEventListener('click', (e) => {
             e.stopPropagation();
             const estaAbierto = menuColores.style.display === 'flex';
             menuColores.style.display = estaAbierto ? 'none' : 'flex';
-            btnColor.style.opacity = estaAbierto ? '0.3' : '1';
+            btnColor.style.opacity = estaAbierto ? '0.4' : '1';
         });
 
         opcionesColor.forEach(opcion => {
@@ -442,7 +270,7 @@
                 colorFiltro = e.target.getAttribute('data-color');
                 btnColor.style.backgroundColor = getComputedStyle(e.target).backgroundColor;
                 menuColores.style.display = 'none';
-                btnColor.style.opacity = '0.3';
+                btnColor.style.opacity = '0.4';
             });
         });
 
@@ -452,21 +280,24 @@
             const archivoUrl = selectedOption.value;
             tipoActual = selectedOption.getAttribute('data-tipo');
 
+            // Reiniciar posición al cambiar de efecto
+            posX = 0; posY = 0; escalaActual = 1; sliderEscala.value = 1;
+            if (modoMoverActivo) { btnMoverEfecto.click(); }
+
             if (tipoActual === 'gif') {
                 videoMultimedia.pause();
                 canvas.style.display = 'none';
-                btnColor.style.display = 'none'; // Los GIF no usan Chroma key manual
-                
+                btnColor.style.display = 'none';
                 imagenGif.src = archivoUrl;
                 imagenGif.style.display = 'block';
+                aplicarTransformacion();
             } else {
                 imagenGif.style.display = 'none';
-                btnColor.style.display = 'block'; // El botón de color siempre visible para videos MP4
+                btnColor.style.display = 'block';
                 canvas.style.display = 'block';
-                
                 videoMultimedia.src = archivoUrl;
                 videoMultimedia.muted = false;
-                videoMultimedia.play().catch(e => console.log("Audio pendiente de interacción.", e));
+                videoMultimedia.play().catch(() => {});
             }
         }
 
@@ -479,23 +310,18 @@
                     video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
                     audio: false 
                 });
-                
                 videoCamara.srcObject = stream;
-                
                 videoCamara.onloadedmetadata = () => {
                     videoCamara.play();
                     pantallaInicio.style.display = 'none';
                     panelControles.style.display = 'flex';
-                    
                     if (document.documentElement.requestFullscreen) {
                         document.documentElement.requestFullscreen().catch(() => {});
                     }
-
                     actualizarSelect();
                     cargarArchivoSeleccionado();
                 };
             } catch (err) {
-                console.error(err);
                 mensajeError.innerText = "Error: No se pudo acceder a la cámara o permisos denegados.";
             }
         }
@@ -503,13 +329,14 @@
         videoMultimedia.addEventListener('loadedmetadata', () => {
             canvas.width = videoMultimedia.videoWidth;
             canvas.height = videoMultimedia.videoHeight;
+            aplicarTransformacion();
             if (!procesando) {
                 procesando = true;
-                procesarChrogaKey();
+                procesarChromaKey();
             }
         });
 
-        function procesarChrogaKey() {
+        function procesarChromaKey() {
             if (tipoActual === 'video' && !videoMultimedia.paused && !videoMultimedia.ended) {
                 ctx.drawImage(videoMultimedia, 0, 0, canvas.width, canvas.height);
                 let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -530,9 +357,10 @@
                 }
                 ctx.putImageData(frame, 0, 0);
             }
-            requestAnimationFrame(procesarChrogaKey);
+            requestAnimationFrame(procesarChromaKey);
         }
 
+        btnIniciar.append('click', () => {}); // Previene errores nulos
         btnIniciar.addEventListener('click', iniciarExperiencia);
     </script>
 </body>
