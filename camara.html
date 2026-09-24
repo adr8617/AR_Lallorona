@@ -1,649 +1,72 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-<title>Estudio AR: Versión Comercial Blindada</title>
-<style>
-/* Reset absoluto para cubrir el 100% de la pantalla y ocultar desbordamientos */
-html, body { margin: 0; padding: 0; background-color: #000; width: 100vw; height: 100vh; overflow: hidden; font-family: sans-serif; -webkit-touch-callout: none; }
-#contenedor-principal { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; }
-
-#pantalla-inicio { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.98); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; gap: 15px; }
-#btn-iniciar { background-color: #28a745; color: white; font-weight: bold; font-size: 18px; padding: 12px 25px; border-radius: 12px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; }
-.input-login { padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; width: 260px; text-align: center; }
-#mensaje-error { color: #ff4444; text-align: center; max-width: 80%; font-size: 14px; }
-
-#modal-2fa { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 20000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-#contenido-2fa { background: #1c1c1c; color: #fff; padding: 25px; border-radius: 12px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.7); border: 1px solid #ff4444; }
-#contenido-2fa h3 { color: #ff4444; margin-top: 0; }
-.btn-2fa { padding: 10px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; margin: 10px 5px; }
-#btn-aprobar-dispositivo { background: #28a745; color: white; }
-#btn-rechazar-dispositivo { background: #dc3545; color: white; }
-
-#modal-terminos { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-#contenido-modal { background: #1c1c1c; color: #fff; padding: 25px; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 5px 20px rgba(0,0,0,0.7); font-size: 13px; line-height: 1.5; border: 1px solid #444; }
-#contenido-modal h3 { margin-top: 0; color: #28a745; font-size: 18px; }
-#btn-cerrar-modal { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-top: 15px; cursor: pointer; float: right; font-weight: bold; }
-
-#panel-controles { position: absolute; top: 20px; left: 20px; z-index: 5000; display: flex; gap: 10px; align-items: center; }
-.btn-flotante { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(0, 0, 0, 0.4); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: background-color 0.2s; }
-.btn-flotante:active { background-color: rgba(0, 0, 0, 0.7); }
-
-#btn-menu-circular::after { content: "⚙️"; font-size: 16px; }
-#btn-mover-efecto::after { content: "✋"; font-size: 16px; }
-#btn-mover-efecto.activo { background-color: #28a745; border-color: #fff; }
-#btn-terminos::after { content: "📄"; font-size: 16px; }
-#btn-cambiar-camara::after { content: "🔄"; font-size: 16px; }
-
-/* Control del botón del ojo */
-#btn-toggle-interfaz::after { content: "👁️"; font-size: 16px; }
-#btn-toggle-interfaz.oculto::after { content: "🙈"; font-size: 16px; }
-
-/* Botón de grabar dinámico */
-#btn-grabar { width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); border: 2px solid #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.5); position: relative; transition: all 0.3s ease; }
-#btn-grabar::after { content: "🔴"; font-size: 14px; }
-#btn-grabar.grabando { background-color: rgba(255, 0, 0, 0.9); border-radius: 8px; animation: parpadeo 1s infinite; }
-#btn-grabar.grabando::after { content: "⏹️"; font-size: 12px; }
-
-@keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
-#tooltip-texto { position: absolute; left: 48px; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.85); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 13px; white-space: nowrap; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-#btn-menu-circular:hover #tooltip-texto, #btn-menu-circular.activo-tactil #tooltip-texto { opacity: 1; visibility: visible; }
-
-#selector-video-wrapper { display: none; position: absolute; left: 48px; top: 0; background: rgba(0, 0, 0, 0.9); padding: 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); flex-direction: column; gap: 8px; min-width: 200px; z-index: 5001; }
-#selector-video { padding: 8px; font-size: 14px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; cursor: pointer; }
-#input-archivo-oculto { display: none; }
-
-.btn-accion-menu { color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; text-align: center; }
-#btn-agregar-archivo { background: #1b4d3e; }
-#btn-borrar-item { background: #6c2222; }
-
-#panel-escala { display: none; position: absolute; top: 70px; left: 20px; background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 8px; z-index: 5000; color: white; font-size: 12px; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-#slider-escala { width: 100px; cursor: pointer; }
-
-#aviso-premium { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(220, 53, 69, 0.95); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; z-index: 9999; display: none; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.6); line-height: 1.4; }
-
-#btn-color { position: absolute; top: 20px; right: 20px; width: 25px; height: 25px; border-radius: 50%; background-color: #00ff00; cursor: pointer; z-index: 5000; opacity: 0.4; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.8); display: block; transition: opacity 0.3s; }
-#menu-colores { display: none; position: absolute; top: 55px; right: 20px; background: rgba(0,0,0,0.9); padding: 10px; border-radius: 8px; z-index: 5001; flex-direction: column; gap: 12px; }
-.opcion-color { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
-
-/* Control fluido de cámara y canvas abarcando siempre 100% de la pantalla sin importar rotación */
-#video-camara { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: 1; background-color: #000; }
-#video-multimedia, #imagen-fuente-oculta { display: none; }
-#capa-efecto-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; pointer-events: none; display: flex; justify-content: center; align-items: center; }
-#canvas-overlay { width: 100vw; height: 100vh; max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: auto; touch-action: none; cursor: default; }
-</style>
-</head>
-<body>
-<div id="pantalla-inicio">
-    <h2 style="color: white; margin-bottom: 5px;">Estudio AR</h2>
-    <p style="color: #aaa; font-size: 13px; margin-top: 0;">Acceso de Superusuario y Control Maestro</p>
-    <input type="email" id="input-email-usuario" class="input-login" placeholder="correo@gmail.com" value="adr8617@gmail.com">
-    <button id="btn-iniciar">TOCA AQUÍ PARA INICIAR</button>
-    <p id="mensaje-error"></p>
-</div>
-
-<div id="modal-2fa">
-    <div id="contenido-2fa">
-        <h3>🚨 Alerta de Seguridad</h3>
-        <p>Se ha intentado activar el modo Superusuario desde un <strong>dispositivo o IP no registrado</strong>.<br><br>¿Autorizas el acceso para este nuevo teléfono?</p>
-        <button id="btn-aprobar-dispositivo" class="btn-2fa">Sí, soy yo (Autorizar)</button>
-        <button id="btn-rechazar-dispositivo" class="btn-2fa">Bloquear</button>
-    </div>
-</div>
-
-<div id="modal-terminos">
-    <div id="contenido-modal">
-        <h3>📄 Términos, Condiciones y Privacidad</h3>
-        <p><strong>Privacidad de Datos:</strong> Estudio AR utiliza la cámara de tu dispositivo exclusivamente en tiempo real para superponer los efectos visuales seleccionados. 
-        <br><br><strong>Seguridad:</strong> Ninguna imagen, video ni flujo de cámara es grabado ni transmitido a servidores externos. Todo el procesamiento ocurre localmente.
-        <br><br><strong>Suscripción:</strong> Funciones avanzadas por $30 MXN bimestrales gestionados mediante Google Play Billing.</p>
-        <button id="btn-cerrar-modal">Entendido</button>
-    </div>
-</div>
-
-<div id="contenedor-principal">
-    <div id="aviso-premium">⚠️ Función bloqueada. Desbloquea movimiento, zoom y croma completo suscribiéndote por solo $30 bimestrales.</div>
-
-    <div id="panel-controles">
-        <div id="btn-menu-circular" class="btn-flotante control-ocultable">
-            <span id="tooltip-texto">Menú de Efectos</span>
-            <div id="selector-video-wrapper">
-                <select id="selector-video"></select>
-                <button id="btn-agregar-archivo" class="btn-accion-menu">➕ Agregar archivo local</button>
-                <button id="btn-borrar-item" class="btn-accion-menu">🗑️ Borrar seleccionado</button>
-            </div>
-        </div>
-        <div id="btn-mover-efecto" class="btn-flotante control-ocultable" title="Mover y Escalar"></div>
-        <div id="btn-cambiar-camara" class="btn-flotante control-ocultable" title="Cambiar Cámara"></div>
-        <div id="btn-terminos" class="btn-flotante control-ocultable" title="Términos y Privacidad"></div>
-        <div id="btn-toggle-interfaz" class="btn-flotante" title="Ocultar/Mostrar Controles"></div>
-        <div id="btn-grabar" title="Grabar Video"></div>
-    </div>
-
-    <div id="panel-escala">
-        <span>Zoom:</span>
-        <input type="range" id="slider-escala" min="0.3" max="2.5" step="0.05" value="1">
-    </div>
-
-    <input type="file" id="input-archivo-oculto" accept="video/mp4,image/gif,image/webp">
-
-    <div id="btn-color"></div>
-    <div id="menu-colores">
-        <div class="opcion-color" data-color="verde" style="background-color: #00ff00;" title="Verde"></div>
-        <div class="opcion-color" data-color="azul" style="background-color: #0000ff;" title="Azul (Premium)"></div>
-        <div class="opcion-color" data-color="negro" style="background-color: #111; border: 1px solid #777;" title="Negro (Premium)"></div>
-    </div>
-
-    <video id="video-camara" autoplay playsinline muted></video>
-    <video id="video-multimedia" loop playsinline crossorigin="anonymous"></video>
-    <img id="imagen-fuente-oculta" crossorigin="anonymous">
+function iniciarGrabacion() {
+    let nombreSugerido = `EstudioAR_${Date.now()}`;
+    nombreArchivoGrabado = prompt("Escribe el nombre para tu video grabado:", nombreSugerido);
     
-    <div id="capa-efecto-container">
-        <canvas id="canvas-overlay"></canvas>
-    </div>
-</div>
-
-<script>
-const SUPER_USUARIOS = ["adr8617@gmail.com", "la.burbuj@gmail.com"];
-let esSuperUsuario = false;
-
-function obtenerDispositivoId() {
-    let devId = localStorage.getItem('estudio_ar_device_id');
-    if (!devId) {
-        devId = 'dev_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-        localStorage.setItem('estudio_ar_device_id', devId);
+    if (!nombreArchivoGrabado || nombreArchivoGrabado.trim() === "") {
+        return; 
     }
-    return devId;
-}
 
-const MULTIMEDIA_DEFAULT = [{ nombre: "Video Chroma: La Llorona", archivo: "llorona.mp4", tipo: "video" }];
-
-function obtenerBaseDatos() {
-    const guardado = localStorage.getItem('efectos_ar_db');
-    if (guardado) {
-        try { const parsed = JSON.parse(guardado); return parsed.length > 0 ? parsed : MULTIMEDIA_DEFAULT; } 
-        catch(e) { return MULTIMEDIA_DEFAULT; }
+    if (!interfazOculta) {
+        btnToggleInterfaz.click();
     }
-    return MULTIMEDIA_DEFAULT;
-}
 
-function guardarBaseDatos(db) { localStorage.setItem('efectos_ar_db', JSON.stringify(db)); }
-let listaMultimedia = obtenerBaseDatos();
+    fragmentosVideo = [];
 
-const videoCamara = document.getElementById('video-camara');
-const videoMultimedia = document.getElementById('video-multimedia');
-const imagenFuenteOculta = document.getElementById('imagen-fuente-oculta');
-const canvas = document.getElementById('canvas-overlay');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    // --- SOLUCIÓN PARA UNIFICAR LA CÁMARA Y EL EFECTO EN UN SOLO VIDEO ---
+    const canvasGrabacion = document.createElement('canvas');
+    canvasGrabacion.width = videoCamara.videoWidth || 1280;
+    canvasGrabacion.height = videoCamara.videoHeight || 720;
+    const ctxGrabacion = canvasGrabacion.getContext('2d');
 
-const btnIniciar = document.getElementById('btn-iniciar');
-const inputEmailUsuario = document.getElementById('input-email-usuario');
-const pantallaInicio = document.getElementById('pantalla-inicio');
-const panelControles = document.getElementById('panel-controles');
-const selectorVideo = document.getElementById('selector-video');
-const mensajeError = document.getElementById('mensaje-error');
-const avisoPremium = document.getElementById('aviso-premium');
-const modal2fa = document.getElementById('modal-2fa');
-const btnAprobarDispositivo = document.getElementById('btn-aprobar-dispositivo');
-const btnRechazarDispositivo = document.getElementById('btn-rechazar-dispositivo');
+    // Creamos un loop interno que dibuja primero tu cámara y luego el efecto de la Llorona encima cuadro por cuadro
+    let grabandoActivo = true;
+    function dibujarFrameParaGrabacion() {
+        if (!grabandoActivo) return;
+        // 1. Dibuja la cámara de fondo
+        ctxGrabacion.drawImage(videoCamara, 0, 0, canvasGrabacion.width, canvasGrabacion.height);
+        // 2. Dibuja el efecto de croma (la Llorona) exactamente encima
+        ctxGrabacion.drawImage(canvas, 0, 0, canvasGrabacion.width, canvasGrabacion.height);
+        requestAnimationFrame(dibujarFrameParaGrabacion);
+    }
+    dibujarFrameParaGrabacion();
 
-const btnMenuCircular = document.getElementById('btn-menu-circular');
-const selectorVideoWrapper = document.getElementById('selector-video-wrapper');
-const btnAgregarArchivo = document.getElementById('btn-agregar-archivo');
-const btnBorrarItem = document.getElementById('btn-borrar-item');
-const inputArchivoOculto = document.getElementById('input-archivo-oculto');
-const btnMoverEfecto = document.getElementById('btn-mover-efecto');
-const btnTerminos = document.getElementById('btn-terminos');
-const modalTerminos = document.getElementById('modal-terminos');
-const btnCerrarModal = document.getElementById('btn-cerrar-modal');
-const btnGrabar = document.getElementById('btn-grabar');
-const panelEscala = document.getElementById('panel-escala');
-const sliderEscala = document.getElementById('slider-escala');
-
-const btnColor = document.getElementById('btn-color');
-const menuColores = document.getElementById('menu-colores');
-const opcionesColor = document.querySelectorAll('.opcion-color');
-
-const btnCambiarCamara = document.getElementById('btn-cambiar-camara');
-const btnToggleInterfaz = document.getElementById('btn-toggle-interfaz');
-const controlesOcultables = document.querySelectorAll('.control-ocultable');
-
-let colorFiltro = 'verde'; 
-let procesando = false;
-let tipoActual = 'video';
-let animacionGifId = null;
-
-let modoMoverActivo = false;
-let posX = 0, posY = 0, escalaActual = 1;
-let arrastrando = false;
-let startX = 0, startY = 0;
-
-let mediaRecorder;
-let fragmentosVideo = [];
-let estaGrabando = false;
-let nombreArchivoGrabado = "";
-
-let listaCamaras = [];
-let indiceCamaraActual = 0;
-let interfazOculta = false;
-
-function mostrarAviso() {
-    avisoPremium.style.display = 'block';
-    setTimeout(() => { avisoPremium.style.display = 'none'; }, 5000);
-}
-
-btnTerminos.addEventListener('click', (e) => { e.stopPropagation(); modalTerminos.style.display = 'flex'; });
-btnCerrarModal.addEventListener('click', () => { modalTerminos.style.display = 'none'; });
-
-btnToggleInterfaz.addEventListener('click', (e) => {
-    e.stopPropagation();
-    interfazOculta = !interfazOculta;
+    // Capturamos el stream del canvas unificado que sí contiene ambos elementos
+    const streamCanvasUnificado = canvasGrabacion.captureStream(30);
+    const streamCamara = videoCamara.srcObject;
+    const tracksCombinados = [...streamCanvasUnificado.getVideoTracks()];
     
-    controlesOcultables.forEach(el => {
-        el.style.display = interfazOculta ? 'none' : 'flex';
-    });
+    if (videoMultimedia.srcObject && videoMultimedia.srcObject.getAudioTracks().length > 0) {
+        tracksCombinados.push(...videoMultimedia.srcObject.getAudioTracks());
+    }
+    const streamFinal = new MediaStream(tracksCombinados);
 
-    btnToggleInterfaz.classList.toggle('oculto', interfazOculta);
-    btnColor.style.opacity = interfazOculta ? '0' : '0.4';
-    btnColor.style.pointerEvents = interfazOculta ? 'none' : 'auto';
+    try { mediaRecorder = new MediaRecorder(streamFinal, { mimeType: 'video/webm; codecs=vp9' }); } 
+    catch (e) { mediaRecorder = new MediaRecorder(streamFinal); }
+
+    mediaRecorder.ondataavailable = (event) => { if (event.data && event.data.size > 0) fragmentosVideo.push(event.data); };
     
-    if (interfazOculta) {
-        selectorVideoWrapper.style.display = 'none';
-        menuColores.style.display = 'none';
-        panelEscala.style.display = 'none';
-    } else if (modoMoverActivo) {
-        panelEscala.style.display = 'flex';
-    }
-});
+    mediaRecorder.onstop = () => {
+        grabandoActivo = false; // Detiene el loop de unificación
+        const blob = new Blob(fragmentosVideo, { type: 'video/webm' });
+        const urlBlob = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = urlBlob;
+        a.download = `${nombreArchivoGrabado.replace(/[^a-z0-9_]/gi, '_')}.webm`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { 
+            document.body.removeChild(a); 
+            window.URL.revokeObjectURL(urlBlob); 
+            alert(`¡Video guardado con éxito con la Llorona incluida!`);
+        }, 100);
 
-function actualizarSelect() {
-    selectorVideo.innerHTML = "";
-    listaMultimedia.forEach((item) => {
-        let option = document.createElement('option');
-        option.value = item.archivo;
-        option.setAttribute('data-tipo', item.tipo);
-        option.innerText = item.nombre;
-        selectorVideo.appendChild(option);
-    });
-}
-
-btnMenuCircular.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const estaVisible = selectorVideoWrapper.style.display === 'flex';
-    selectorVideoWrapper.style.display = estaVisible ? 'none' : 'flex';
-    btnMenuCircular.classList.toggle('activo-tactil', !estaVisible);
-});
-
-document.addEventListener('click', () => {
-    selectorVideoWrapper.style.display = 'none';
-    btnMenuCircular.classList.remove('activo-tactil');
-    menuColores.style.display = 'none';
-    if (!interfazOculta) btnColor.style.opacity = '0.4';
-});
-
-selectorVideoWrapper.addEventListener('click', (e) => e.stopPropagation());
-
-btnAgregarArchivo.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!esSuperUsuario && listaMultimedia.length >= 2) {
-        mostrarAviso();
-        selectorVideoWrapper.style.display = 'none';
-        return;
-    }
-    inputArchivoOculto.click();
-});
-
-btnBorrarItem.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const indexSeleccionado = selectorVideo.selectedIndex;
-    if (listaMultimedia.length <= 1) { alert("No puedes borrar el elemento predeterminado."); return; }
-    if (indexSeleccionado >= 0) {
-        if (confirm(`¿Deseas eliminar este efecto?`)) {
-            listaMultimedia.splice(indexSeleccionado, 1);
-            guardarBaseDatos(listaMultimedia);
-            actualizarSelect();
-            selectorVideo.selectedIndex = 0;
-            cargarArchivoSeleccionado();
-            selectorVideoWrapper.style.display = 'none';
-        }
-    }
-});
-
-inputArchivoOculto.addEventListener('change', (e) => {
-    const archivo = e.target.files[0];
-    if (!archivo) return;
-    const nombreArchivo = archivo.name;
-    const esGif = nombreArchivo.toLowerCase().endsWith('.gif') || archivo.type === 'image/gif';
-    const tipoDetectado = esGif ? 'gif' : 'video';
-    let descripcionCustom = prompt("Escribe el nombre descriptivo para este efecto:", nombreArchivo);
-    if (!descripcionCustom || descripcionCustom.trim() === "") descripcionCustom = nombreArchivo;
-
-    const urlLocal = URL.createObjectURL(archivo);
-    listaMultimedia.push({ nombre: descripcionCustom, archivo: urlLocal, tipo: tipoDetectado });
-    guardarBaseDatos(listaMultimedia);
-    actualizarSelect();
-    selectorVideo.selectedIndex = selectorVideo.options.length - 1;
-    cargarArchivoSeleccionado();
-    selectorVideoWrapper.style.display = 'none';
-});
-
-btnMoverEfecto.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!esSuperUsuario) {
-        mostrarAviso();
-        return;
-    }
-    modoMoverActivo = !modoMoverActivo;
-    btnMoverEfecto.classList.toggle('activo', modoMoverActivo);
-    panelEscala.style.display = (modoMoverActivo && !interfazOculta) ? 'flex' : 'none';
-});
-
-sliderEscala.addEventListener('input', (e) => {
-    if (!esSuperUsuario) return;
-    escalaActual = parseFloat(e.target.value);
-    aplicarTransformacion();
-});
-
-function aplicarTransformacion() {
-    canvas.style.transform = `translate(${posX}px, ${posY}px) scale(${escalaActual})`;
-}
-
-['mousedown', 'touchstart'].forEach(evt => {
-    canvas.addEventListener(evt, (e) => {
-        if (!modoMoverActivo || !esSuperUsuario) return;
-        arrastrando = true;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        startX = clientX - posX;
-        startY = clientY - posY;
-        e.preventDefault();
-    });
-});
-
-['mousemove', 'touchmove'].forEach(evt => {
-    window.addEventListener(evt, (e) => {
-        if (!arrastrando || !modoMoverActivo) return;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        posX = clientX - startX;
-        posY = clientY - startY;
-        aplicarTransformacion();
-    });
-});
-
-['mouseup', 'touchend'].forEach(evt => {
-    window.addEventListener(evt, () => { arrastrando = false; });
-});
-
-// Control absoluto del botón de grabación (Iniciar pidiendo nombre/cuadro, Detener guardando y volviendo a círculo rojo)
-btnGrabar.addEventListener('click', () => {
-    if (!estaGrabando) { 
-        let nombreSugerido = `EstudioAR_${Date.now()}`;
-        nombreArchivoGrabado = prompt("Escribe el nombre para tu video grabado:", nombreSugerido);
-        
-        if (!nombreArchivoGrabado || nombreArchivoGrabado.trim() === "") {
-            return; // Si cancela el prompt, no inicia la grabación
-        }
-
-        // Ocultar la interfaz al iniciar para dejar la pantalla limpia
-        if (!interfazOculta) {
+        if (interfazOculta) {
             btnToggleInterfaz.click();
         }
+    };
 
-        fragmentosVideo = [];
-        const streamCanvas = canvas.captureStream(30); 
-        const streamCamara = videoCamara.srcObject;
-        const tracksCombinados = [...streamCamara.getVideoTracks(), ...streamCanvas.getVideoTracks()];
-        if (videoMultimedia.srcObject && videoMultimedia.srcObject.getAudioTracks().length > 0) {
-            tracksCombinados.push(...videoMultimedia.srcObject.getAudioTracks());
-        }
-        const streamFinal = new MediaStream(tracksCombinados);
-
-        try { mediaRecorder = new MediaRecorder(streamFinal, { mimeType: 'video/webm; codecs=vp9' }); } 
-        catch (e) { mediaRecorder = new MediaRecorder(streamFinal); }
-
-        mediaRecorder.ondataavailable = (event) => { if (event.data && event.data.size > 0) fragmentosVideo.push(event.data); };
-        
-        mediaRecorder.onstop = () => {
-            const blob = new Blob(fragmentosVideo, { type: 'video/webm' });
-            const urlBlob = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = urlBlob;
-            a.download = `${nombreArchivoGrabado.replace(/[^a-z0-9_]/gi, '_')}.webm`;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => { 
-                document.body.removeChild(a); 
-                window.URL.revokeObjectURL(urlBlob); 
-                alert(`¡Video guardado con éxito!`);
-            }, 100);
-
-            // Regresar la interfaz a visible al terminar de guardar
-            if (interfazOculta) {
-                btnToggleInterfaz.click();
-            }
-        };
-
-        mediaRecorder.start();
-        estaGrabando = true;
-        btnGrabar.classList.add('grabando'); // Cambia a cuadrado/stop
-
-    } else { 
-        if (mediaRecorder) { 
-            mediaRecorder.stop(); 
-        }
-        estaGrabando = false; 
-        btnGrabar.classList.remove('grabando'); // Regresa a círculo rojo redondo
-    }
-});
-
-btnColor.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const estaAbierto = menuColores.style.display === 'flex';
-    menuColores.style.display = estaAbierto ? 'none' : 'flex';
-    btnColor.style.opacity = estaAbierto ? '0.4' : '1';
-});
-
-opcionesColor.forEach(opcion => {
-    opcion.addEventListener('click', (e) => {
-        const colorSeleccionado = e.target.getAttribute('data-color');
-        if (!esSuperUsuario && colorSeleccionado !== 'verde') {
-            mostrarAviso();
-            menuColores.style.display = 'none';
-            return;
-        }
-        colorFiltro = colorSeleccionado;
-        btnColor.style.backgroundColor = getComputedStyle(e.target).backgroundColor;
-        menuColores.style.display = 'none';
-        btnColor.style.opacity = '0.4';
-    });
-});
-
-function cargarArchivoSeleccionado() {
-    if (selectorVideo.options.length === 0) return;
-    const selectedOption = selectorVideo.options[selectorVideo.selectedIndex];
-    const archivoUrl = selectedOption.value;
-    tipoActual = selectedOption.getAttribute('data-tipo');
-
-    if (animacionGifId) { cancelAnimationFrame(animacionGifId); animacionGifId = null; }
-
-    if (tipoActual === 'gif') {
-        videoMultimedia.pause();
-        btnColor.style.display = interfazOculta ? 'none' : 'block';
-        imagenFuenteOculta.src = archivoUrl;
-        imagenFuenteOculta.onload = () => {
-            procesarChromaKeyGIF();
-        };
-    } else {
-        imagenFuenteOculta.src = "";
-        btnColor.style.display = interfazOculta ? 'none' : 'block';
-        videoMultimedia.src = archivoUrl;
-        videoMultimedia.muted = false;
-        videoMultimedia.play().catch(() => {});
-    }
+    mediaRecorder.start();
+    estaGrabando = true;
+    btnGrabar.classList.add('grabando');
 }
-
-selectorVideo.addEventListener('change', cargarArchivoSeleccionado);
-
-function verificarAccesoSuperusuario() {
-    const emailIngresado = inputEmailUsuario.value.trim().toLowerCase();
-    
-    if (SUPER_USUARIOS.includes(emailIngresado)) {
-        const deviceIdActual = obtenerDispositivoId();
-        const dispositivosAutorizadosKey = `auth_devs_${emailIngresado}`;
-        let dispositivosGuardados = JSON.parse(localStorage.getItem(dispositivosAutorizadosKey) || "[]");
-
-        if (dispositivosGuardados.includes(deviceIdActual)) {
-            esSuperUsuario = true;
-            lanzarApp();
-        } else {
-            modal2fa.style.display = 'flex';
-
-            btnAprobarDispositivo.onclick = () => {
-                dispositivosGuardados.push(deviceIdActual);
-                localStorage.setItem(dispositivosAutorizadosKey, JSON.stringify(dispositivosGuardados));
-                modal2fa.style.display = 'none';
-                esSuperUsuario = true;
-                lanzarApp();
-            };
-
-            btnRechazarDispositivo.onclick = () => {
-                modal2fa.style.display = 'none';
-                esSuperUsuario = false;
-                lanzarApp();
-            };
-        }
-    } else {
-        esSuperUsuario = false;
-        lanzarApp();
-    }
-}
-
-async function iniciarCamara(deviceIdEspecifico = null) {
-    if (videoCamara.srcObject) {
-        videoCamara.srcObject.getTracks().forEach(track => track.stop());
-    }
-
-    let restriccionesVideo;
-    if (deviceIdEspecifico) {
-        restriccionesVideo = { deviceId: { exact: deviceIdEspecifico }, width: { ideal: 1920 }, height: { ideal: 1080 } };
-    } else {
-        let modoActualCamara = listaCamaras.length > 0 ? (indiceCamaraActual % 2 === 0 ? "user" : "environment") : "user";
-        restriccionesVideo = { facingMode: modoActualCamara, width: { ideal: 1920 }, height: { ideal: 1080 } };
-    }
-
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: restriccionesVideo, audio: true });
-        videoCamara.srcObject = stream;
-        videoCamara.play();
-    } catch (err) {
-        const streamFallback = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        videoCamara.srcObject = streamFallback;
-        videoCamara.play();
-    }
-}
-
-async function detectarDispositivosCamara() {
-    try {
-        const dispositivos = await navigator.mediaDevices.enumerateDevices();
-        listaCamaras = dispositivos.filter(d => d.kind === 'videoinput');
-    } catch (e) {
-        console.error("Error al listar cámaras:", e);
-    }
-}
-
-btnCambiarCamara.addEventListener('click', async () => {
-    await detectarDispositivosCamara();
-    if (listaCamaras.length > 1) {
-        indiceCamaraActual = (indiceCamaraActual + 1) % listaCamaras.length;
-        await iniciarCamara(listaCamaras[indiceCamaraActual].deviceId);
-    } else {
-        indiceCamaraActual++;
-        await iniciarCamara();
-    }
-});
-
-async function lanzarApp() {
-    mensajeError.innerText = "Solicitando permisos de cámara...";
-    try {
-        await detectarDispositivosCamara();
-        await iniciarCamara();
-        
-        videoCamara.onloadedmetadata = () => {
-            pantallaInicio.style.display = 'none';
-            panelControles.style.display = 'flex';
-            
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(() => {});
-            } else if (elem.webkitRequestFullscreen) {
-                elem.webkitRequestFullscreen();
-            }
-
-            actualizarSelect();
-            cargarArchivoSeleccionado();
-        };
-    } catch (err) {
-        mensajeError.innerText = "Error: No se pudo acceder a la cámara o permisos denegados.";
-    }
-}
-
-window.addEventListener('resize', () => {
-    if (videoMultimedia.videoWidth) {
-        canvas.width = videoMultimedia.videoWidth;
-        canvas.height = videoMultimedia.videoHeight;
-    } else if (imagenFuenteOculta.naturalWidth) {
-        canvas.width = imagenFuenteOculta.naturalWidth;
-        canvas.height = imagenFuenteOculta.naturalHeight;
-    }
-});
-
-videoMultimedia.addEventListener('loadedmetadata', () => {
-    canvas.width = videoMultimedia.videoWidth;
-    canvas.height = videoMultimedia.videoHeight;
-    if (!procesando) { procesando = true; procesarChromaKeyVideo(); }
-});
-
-function procesarChromaKeyVideo() {
-    if (tipoActual === 'video' && !videoMultimedia.paused && !videoMultimedia.ended) {
-        ctx.drawImage(videoMultimedia, 0, 0, canvas.width, canvas.height);
-        let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        let totalPixeles = frame.data.length / 4;
-
-        for (let i = 0; i < totalPixeles; i++) {
-            let r = frame.data[i * 4 + 0], g = frame.data[i * 4 + 1], b = frame.data[i * 4 + 2];
-            if (colorFiltro === 'verde') { if (g > 90 && r < 110 && b < 110) frame.data[i * 4 + 3] = 0; } 
-            else if (colorFiltro === 'azul' && esSuperUsuario) { if (b > 90 && r < 110 && g < 110) frame.data[i * 4 + 3] = 0; } 
-            else if (colorFiltro === 'negro' && esSuperUsuario) { if (r < 50 && g < 50 && b < 50) frame.data[i * 4 + 3] = 0; }
-        }
-        ctx.putImageData(frame, 0, 0);
-    }
-    requestAnimationFrame(procesarChromaKeyVideo);
-}
-
-function procesarChromaKeyGIF() {
-    if (tipoActual === 'gif') {
-        canvas.width = imagenFuenteOculta.naturalWidth || 500;
-        canvas.height = imagenFuenteOculta.naturalHeight || 500;
-        ctx.drawImage(imagenFuenteOculta, 0, 0, canvas.width, canvas.height);
-        let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        let totalPixeles = frame.data.length / 4;
-
-        for (let i = 0; i < totalPixeles; i++) {
-            let r = frame.data[i * 4 + 0], g = frame.data[i * 4 + 1], b = frame.data[i * 4 + 2];
-            if (colorFiltro === 'verde') { if (g > 90 && r < 110 && b < 110) frame.data[i * 4 + 3] = 0; } 
-            else if (colorFiltro === 'azul' && esSuperUsuario) { if (b > 90 && r < 110 && g < 110) frame.data[i * 4 + 3] = 0; } 
-            else if (colorFiltro === 'negro' && esSuperUsuario) { if (r < 50 && g < 50 && b < 50) frame.data[i * 4 + 3] = 0; }
-        }
-        ctx.putImageData(frame, 0, 0);
-        animacionGifId = requestAnimationFrame(procesarChromaKeyGIF);
-    }
-}
-
-btnIniciar.addEventListener('click', verificarAccesoSuperusuario);
-</script>
-</body>
-</html>
