@@ -328,7 +328,6 @@ function aplicarTransformacion() {
     canvas.style.transform = `translate(${posX}px, ${posY}px) scale(${escalaActual})`;
 }
 
-// --- GESTIÓN DE MOVIMIENTO Y ZOOM TÁCTIL (PELLIZCO) / MOUSE (SCROLL) ---
 function calcularDistanciaTactil(t1, t2) {
     const dx = t1.clientX - t2.clientX;
     const dy = t1.clientY - t2.clientY;
@@ -337,14 +336,11 @@ function calcularDistanciaTactil(t1, t2) {
 
 canvas.addEventListener('touchstart', (e) => {
     if (!esSuperUsuario) return;
-    
     if (e.touches.length === 2) {
-        // Dos dedos: Iniciar pellizco (Zoom)
         distanciaInicialPellizco = calcularDistanciaTactil(e.touches[0], e.touches[1]);
         arrastrando = false;
         e.preventDefault();
     } else if (e.touches.length === 1 && modoMoverActivo) {
-        // Un dedo: Mover posición
         arrastrando = true;
         startX = e.touches[0].clientX - posX;
         startY = e.touches[0].clientY - posY;
@@ -354,9 +350,7 @@ canvas.addEventListener('touchstart', (e) => {
 
 canvas.addEventListener('touchmove', (e) => {
     if (!esSuperUsuario) return;
-
     if (e.touches.length === 2) {
-        // Ejecutar zoom con pellizco
         const distanciaActual = calcularDistanciaTactil(e.touches[0], e.touches[1]);
         if (distanciaInicialPellizco > 0) {
             let factor = distanciaActual / distanciaInicialPellizco;
@@ -369,7 +363,6 @@ canvas.addEventListener('touchmove', (e) => {
         }
         e.preventDefault();
     } else if (e.touches.length === 1 && arrastrando && modoMoverActivo) {
-        // Mover posición
         posX = e.touches[0].clientX - startX;
         posY = e.touches[0].clientY - startY;
         aplicarTransformacion();
@@ -382,7 +375,6 @@ canvas.addEventListener('touchend', (e) => {
     if (e.touches.length === 0) arrastrando = false;
 });
 
-// Para PC: Mover con Mouse y Zoom con Scroll (Rueda del ratón)
 canvas.addEventListener('mousedown', (e) => {
     if (!modoMoverActivo || !esSuperUsuario) return;
     arrastrando = true;
@@ -414,7 +406,7 @@ canvas.addEventListener('wheel', (e) => {
     }
 }, { passive: false });
 
-// Lógica de grabación con unificación de video y audio
+// --- GRABACIÓN UNIFICADA DE VIDEO Y AUDIO MÚLTIPLE (MICRÓFONO + LLORONA) ---
 btnGrabar.addEventListener('click', () => {
     if (!estaGrabando) { 
         let nombreSugerido = `EstudioAR_${Date.now()}`;
@@ -429,6 +421,8 @@ btnGrabar.addEventListener('click', () => {
         }
 
         fragmentosVideo = [];
+        
+        // 1. Unificar los videos en un Canvas temporal
         const canvasGrabacion = document.createElement('canvas');
         canvasGrabacion.width = videoCamara.videoWidth || 1280;
         canvasGrabacion.height = videoCamara.videoHeight || 720;
@@ -445,10 +439,34 @@ btnGrabar.addEventListener('click', () => {
 
         const streamCanvasUnificado = canvasGrabacion.captureStream(30);
         const tracksCombinados = [...streamCanvasUnificado.getVideoTracks()];
-        
-        if (videoMultimedia.srcObject && videoMultimedia.srcObject.getAudioTracks().length > 0) {
-            tracksCombinados.push(...videoMultimedia.srcObject.getAudioTracks());
+
+        // 2. Mezclar los audios usando AudioContext (Micrófono + Video multimedia)
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const dest = audioCtx.createMediaStreamDestination();
+
+            // Audio de la cámara (Micrófono)
+            const streamCamara = videoCamara.srcObject;
+            if (streamCamara && streamCamara.getAudioTracks().length > 0) {
+                const fuenteMic = audioCtx.createMediaStreamSource(streamCamara);
+                fuenteMic.connect(dest);
+            }
+
+            // Audio del video multimedia flotante (La Llorona)
+            if (tipoActual === 'video' && !videoMultimedia.paused) {
+                const fuenteVideo = audioCtx.createMediaElementSource(videoMultimedia);
+                fuenteVideo.connect(dest);
+                fuenteVideo.connect(audioCtx.destination); // Para que se siga escuchando en las bocinas al grabar
+            }
+
+            // Agregar la pista de audio mezclada a la grabación
+            if (dest.stream.getAudioTracks().length > 0) {
+                tracksCombinados.push(dest.stream.getAudioTracks()[0]);
+            }
+        } catch (err) {
+            console.warn("No se pudo mezclar el audio mediante AudioContext:", err);
         }
+
         const streamFinal = new MediaStream(tracksCombinados);
 
         try { mediaRecorder = new MediaRecorder(streamFinal, { mimeType: 'video/webm; codecs=vp9' }); } 
@@ -469,7 +487,7 @@ btnGrabar.addEventListener('click', () => {
             setTimeout(() => { 
                 document.body.removeChild(a); 
                 window.URL.revokeObjectURL(urlBlob); 
-                alert(`¡Video guardado con éxito!`);
+                alert(`¡Video guardado con éxito con video y sonido integrados!`);
             }, 100);
 
             if (interfazOculta) {
@@ -686,7 +704,7 @@ function procesarChromaKeyGIF() {
             let r = frame.data[i * 4 + 0], g = frame.data[i * 4 + 1], b = frame.data[i * 4 + 2];
             if (colorFiltro === 'verde') { if (g > 90 && r < 110 && b < 110) frame.data[i * 4 + 3] = 0; } 
             else if (colorFiltro === 'azul' && esSuperUsuario) { if (b > 90 && r < 110 && g < 110) frame.data[i * 4 + 3] = 0; } 
-            else if (colorFiltro === 'negro' && esSuperUsuario) { if (r < 50 && g < 50 && b < 50) frame.data[i * 4 + 3] = 0; }
+            else if (colorFILtro === 'negro' && esSuperUsuario) { if (r < 50 && g < 50 && b < 50) frame.data[i * 4 + 3] = 0; }
         }
         ctx.putImageData(frame, 0, 0);
         animacionGifId = requestAnimationFrame(procesarChromaKeyGIF);
